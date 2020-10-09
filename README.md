@@ -1,0 +1,1 @@
+# vk-bad-group-finder
