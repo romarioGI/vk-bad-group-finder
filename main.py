@@ -6,4 +6,8 @@ client_secret = "f7K07lCcfsYhyk3X5Py1"
 ans = VkApi.get_access_token(client_id, client_secret)
 print(ans)
 
-exit(0)
+ans = VkApi.get_access_token(client_id, client_secret)
+print(ans)
+
+while True:
+    pass

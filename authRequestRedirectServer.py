@@ -1,16 +1,17 @@
 from flask import Flask, request
-from threading import Lock
+import logging
 
 
 class AuthRequestRedirectServer:
-    def __init__(self, host, port, lock: Lock):
+    def __init__(self, host, port, callback):
         self.host = host
         self.port = port
         self.__app = Flask(__name__)
-        self.__app.debug = False
-        self.__app.use_reloader = False
-        self.__lock = lock
-        self.output = None
+        self.__callback = callback
+        self.__is_alive = True
+        log = logging.getLogger('werkzeug')
+        log.disabled = True
+        self.__app.logger.disabled = True
 
         @self.__app.route('/')
         def index():
@@ -21,12 +22,14 @@ class AuthRequestRedirectServer:
             args = dict(request.args)
             try:
                 if 'code' in args:
-                    return f'<h1>ACCEPTED</h1><p>close browser, return to app</p>'
+                    page = f'<h1>ACCEPTED</h1><p>close browser, return to app</p>'
                 else:
-                    return f'<h1>troubles</h1><p>{str(args)}</p><p>close browser, return to app</p>'
+                    page = f'<h1>troubles</h1><p>{str(args)}</p><p>close browser, return to app</p>'
+                return page
             finally:
-                self.output = args
-                self.__lock.release()
+                if self.__is_alive:
+                    self.__is_alive = False
+                    self.__callback(args)
 
     def run(self):
         self.__app.run(host=self.host, port=self.port, debug=False, use_reloader=False)

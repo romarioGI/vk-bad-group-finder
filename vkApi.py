@@ -5,6 +5,8 @@ from vkApiError import VkApiError
 from vkApiEmptyResponseError import VkApiEmptyResponseError
 from authRequestRedirectServer import AuthRequestRedirectServer
 from threading import Lock, Thread
+from timeoutExpiredError import TimeoutExpiredError
+import random
 
 
 class VkApi:
@@ -190,15 +192,17 @@ class VkApi:
     __scope = __friends_scope + __video_scope + __wall_scope + __offline_scope + __groups_scope
 
     @classmethod
-    def get_access_token(cls, client_id, client_secret, port=8880):
+    def get_access_token(cls, client_id, client_secret, port=None, timeout=60):
         """
         see <a href=https://vk.com/dev/authcode_flow_user>link<a/>
         """
         host = cls.__AUTHORIZE_REDIRECT_HOST
+        if port is None:
+            port = cls.__get_random_port()
         authorize_redirect_uri = f'http://{host}:{port}/vk_auth'
         scope = cls.__scope
 
-        code = cls.__get_access_code(client_id, host, port, authorize_redirect_uri, scope)
+        code = cls.__get_access_code(client_id, host, port, authorize_redirect_uri, scope, timeout)
         request_str = cls.__build_get_access_token_request_str(client_id, client_secret, authorize_redirect_uri, code)
         re = requests.get(request_str).json()
 
@@ -207,25 +211,43 @@ class VkApi:
         raise Exception(str(re))
 
     @classmethod
-    def __get_access_code(cls, client_id, host, port, authorize_redirect_uri, scope, timeout=60):
-        lock = Lock()
-        lock.acquire()
-        auth_server = AuthRequestRedirectServer(host, port, lock)
-        thread = Thread(target=auth_server.run, daemon=True)
-        thread.start()
+    def __get_random_port(cls):
+        return random.randint(49152, 65535)
 
-        request_str = cls.__build_get_access_code_request_str(client_id, scope, authorize_redirect_uri)
-        webbrowser.open(request_str)
-        lock.acquire(timeout=timeout)
+    @classmethod
+    def __get_access_code(cls, client_id, host, port, authorize_redirect_uri, scope, timeout):
+        lock = Lock()
+        output = dict()
+        cls.__start_auth_server(host, port, lambda answer: cls.__auth_callback(lock, output, answer))
+        cls.__open_browser(client_id, scope, authorize_redirect_uri)
+
+        lock.acquire()
+        lock.acquire(timeout)
         lock.release()
 
-        output = auth_server.output
-        del thread
-        del auth_server
-
-        if output is None:
-            raise Exception(f'the timeout ({timeout}) has expired')
+        if len(output) == 0:
+            raise TimeoutExpiredError(timeout)
 
         if 'code' in output:
             return output['code']
         raise Exception(f'{output}')
+
+    @classmethod
+    def __start_auth_server(cls, host, port, callback):
+        auth_server = AuthRequestRedirectServer(host, port, callback)
+        thread = Thread(target=auth_server.run, daemon=True)
+        thread.start()
+
+    @classmethod
+    def __open_browser(cls, client_id, scope, authorize_redirect_uri):
+        request_str = cls.__build_get_access_code_request_str(client_id, scope, authorize_redirect_uri)
+        webbrowser.open(request_str)
+
+    @classmethod
+    def __auth_callback(cls, lock: Lock, output, answer: dict):
+        for (key, value) in answer.items():
+            output[key] = value
+        try:
+            lock.release()
+        except:
+            pass
