@@ -20,13 +20,14 @@ class Task2:
             return {'error': e}
 
     def __solve(self, user_id) -> dict:
-        friends = self.__get_friends_ids(user_id)
+        friends = self.__get_friends_id(user_id)
         task1 = Task1(self.__access_token, self.__content_analyzers)
         return dict(map(
             lambda f_id: (f_id, task1.solve(f_id)),
             friends
         ))
 
-    def __get_friends_ids(self, user_id) -> list:
+    # TODO
+    def __get_friends_id(self, user_id) -> list:
         friends = VkApi.get_friends(self.__access_token, user_id)['items']
         return list(map(lambda f: f['id'], friends))
