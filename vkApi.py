@@ -16,8 +16,8 @@ class VkApi:
 
     @staticmethod
     def __build_request_str(uri: str, method_name: str, params: dict) -> str:
-        paramsString = '&'.join(map(lambda p: f'{p[0]}={p[1]}', params.items()))
-        return f'{uri}/{method_name}?{paramsString}'
+        params_string = '&'.join(map(lambda p: f'{p[0]}={p[1]}', params.items()))
+        return f'{uri}/{method_name}?{params_string}'
 
     @classmethod
     def __api_request(cls, method_name: str, params: dict) -> VkApiResponse:
@@ -218,25 +218,29 @@ class VkApi:
     def __get_access_code(cls, client_id, host, port, authorize_redirect_uri, scope, timeout):
         lock = Lock()
         output = dict()
-        cls.__start_auth_server(host, port, lambda answer: cls.__auth_callback(lock, output, answer))
-        cls.__open_browser(client_id, scope, authorize_redirect_uri)
+        auth_server = cls.__start_auth_server(host, port, lambda answer: cls.__auth_callback(lock, output, answer))
+        try:
+            cls.__open_browser(client_id, scope, authorize_redirect_uri)
 
-        lock.acquire()
-        lock.acquire(timeout)
-        lock.release()
+            lock.acquire()
+            lock.acquire(timeout)
+            lock.release()
 
-        if len(output) == 0:
-            raise TimeoutExpiredError(timeout)
+            if len(output) == 0:
+                raise TimeoutExpiredError(timeout)
 
-        if 'code' in output:
-            return output['code']
-        raise Exception(f'{output}')
+            if 'code' in output:
+                return output['code']
+            raise Exception(f'{output}')
+        finally:
+            auth_server.stop()
 
     @classmethod
     def __start_auth_server(cls, host, port, callback):
         auth_server = AuthRequestRedirectServer(host, port, callback)
         thread = Thread(target=auth_server.run, daemon=True)
         thread.start()
+        return auth_server
 
     @classmethod
     def __open_browser(cls, client_id, scope, authorize_redirect_uri):
@@ -247,7 +251,4 @@ class VkApi:
     def __auth_callback(cls, lock: Lock, output, answer: dict):
         for (key, value) in answer.items():
             output[key] = value
-        try:
-            lock.release()
-        except:
-            pass
+        lock.release()
