@@ -1,1 +1,1 @@
-# vk-bad-group-finder
+# vk-user-analyzer
