@@ -1,13 +1,17 @@
-from vkApi import VkApi
+from task2 import Task2
+import vkApiExtensionMethods
+from vkApiRequestSender import VkApiRequestSender
+from outputHelper import to_pretty
 
-client_id = 7669046
-client_secret = "f7K07lCcfsYhyk3X5Py1"
 
-ans = VkApi.get_access_token(client_id, client_secret)
-print(ans)
+access_token = vkApiExtensionMethods.get_access_token('7669046', 'RaKr73JgXqP7NfR11VYM')
 
-ans = VkApi.get_access_token(client_id, client_secret)
-print(ans)
 
-while True:
-    pass
+sender = VkApiRequestSender(2)
+task2 = Task2(access_token, [], sender)
+
+user_id = vkApiExtensionMethods.get_user_id(access_token, 'romarioGI')
+
+res = task2.solve([user_id])
+res = to_pretty(res)
+print(res)
