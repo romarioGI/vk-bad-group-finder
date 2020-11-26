@@ -176,7 +176,7 @@ class VkApiWrapper:
             yield data[i:i + chunk_size]
 
     def get_groups_info(self, access_token: str, group_ids):
-        group_ids_chunks = list(self.__chunk_data(group_ids, 500))
+        group_ids_chunks = list(self.__chunk_data(group_ids, 100))
         res = []
         for chunk in group_ids_chunks:
             group_ids_str = ','.join(map(str, chunk))
