@@ -44,11 +44,7 @@ class Task1:
 
     def __analyze_group(self, group: dict) -> dict:
         name = group['name']
-        tags = list(map(
-            lambda c_a: c_a.tag,
-            filter(
-                lambda c_a: c_a.check(group),
-                self.__content_analyzers
-            )
-        ))
+        tags = []
+        for c_a in self.__content_analyzers:
+            tags.extend(c_a(group))
         return {'name': name, 'tags': tags}

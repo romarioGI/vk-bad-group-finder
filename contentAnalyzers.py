@@ -1,29 +1,13 @@
-class ContentAnalyzers:
-    def __init__(self, tag: str, check_func):
-        self.tag = tag
-        self.check = check_func
+def erotic_content_analyzer(group) -> list:
+    if is_contain_words(group, ['порно', 'видео для взрослых']):
+        return ['PORNO']
+    return []
 
 
-class EroticContentAnalyzers(ContentAnalyzers):
-    def __init__(self):
-        super().__init__('PORN', self.__check)
-
-    __bad_words = ['порно', 'видео для взрослых']
-
-    @classmethod
-    def __check(cls, group):
-        return is_contain_words(group, cls.__bad_words)
-
-
-class OppositionContentAnalyzers(ContentAnalyzers):
-    def __init__(self):
-        super().__init__('OPPOSITION', self.__check)
-
-    __bad_words = ['оппозиция', 'навальный']
-
-    @classmethod
-    def __check(cls, group):
-        return is_contain_words(group, cls.__bad_words)
+def opposition_content_analyzer(group) -> list:
+    if is_contain_words(group, ['оппозиция', 'навальный']):
+        return ['OPPOSITION']
+    return []
 
 
 def is_contain_words(obj, words: list):
