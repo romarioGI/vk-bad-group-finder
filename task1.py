@@ -1,14 +1,13 @@
-import vkApiExtensionMethods
-from vkApiRequestSender import VkApiRequestSender
+from vkApiWrapper import VkApiWrapper, VkApiError
 
 
 class Task1:
     __PRIVATE_PROFILE_ERROR_CODE = 30
 
-    def __init__(self, access_token: str, content_analyzers: list, sender: VkApiRequestSender):
+    def __init__(self, access_token: str, content_analyzers: list, vkApiWrapper: VkApiWrapper):
         self.__access_token = access_token
         self.__content_analyzers = content_analyzers
-        self.__sender = sender
+        self.__vkApiWrapper = vkApiWrapper
 
     def solve(self, users_id: list, show_untagged: bool = False, ignore_private_accounts: bool = True) -> dict:
         res = map(
@@ -17,7 +16,7 @@ class Task1:
         )
         if ignore_private_accounts:
             res = filter(
-                lambda i: not (isinstance(i[1], vkApiExtensionMethods.VkApiError)
+                lambda i: not (isinstance(i[1], VkApiError)
                                and i[1].error_code == self.__PRIVATE_PROFILE_ERROR_CODE),
                 res
             )
@@ -30,10 +29,7 @@ class Task1:
             return {'error': e}
 
     def __solve(self, user_id, show_untagged: bool) -> dict:
-        def f():
-            return vkApiExtensionMethods.try_get_user_groups(self.__access_token, user_id)
-
-        groups = self.__sender.send(f)
+        groups = self.__vkApiWrapper.try_get_user_groups(self.__access_token, user_id)
         res = map(
             lambda g: (g['id'], self.__analyze_group(g)),
             groups

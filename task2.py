@@ -1,13 +1,12 @@
-import vkApiExtensionMethods
 from task1 import Task1
-from vkApiRequestSender import VkApiRequestSender
+from vkApiWrapper import VkApiWrapper
 
 
 class Task2:
-    def __init__(self, access_token: str, content_analyzers: list, sender: VkApiRequestSender):
+    def __init__(self, access_token: str, content_analyzers: list, vkApiWrapper: VkApiWrapper):
         self.__access_token = access_token
         self.__content_analyzers = content_analyzers
-        self.__sender = sender
+        self.__vkApiWrapper = vkApiWrapper
 
     def solve(self, users_id: list, show_untagged: bool = False, ignore_private_accounts: bool = True) -> dict:
         return dict(map(
@@ -22,9 +21,6 @@ class Task2:
             return {'error': e}
 
     def __solve(self, user_id, show_untagged: bool, ignore_private_accounts: bool) -> dict:
-        def f():
-            return vkApiExtensionMethods.get_friends(self.__access_token, user_id)
-
-        friends = self.__sender.send(f)
-        task1 = Task1(self.__access_token, self.__content_analyzers, self.__sender)
+        friends = self.__vkApiWrapper.get_friends(self.__access_token, user_id)
+        task1 = Task1(self.__access_token, self.__content_analyzers, self.__vkApiWrapper)
         return task1.solve(friends, show_untagged, ignore_private_accounts)
