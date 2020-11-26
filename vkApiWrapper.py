@@ -1,10 +1,9 @@
 import random
 import webbrowser
-from threading import Thread, Lock
-from time import sleep
 from collections import deque
 from datetime import datetime
-
+from threading import Thread, Lock
+from time import sleep
 
 import requests
 
