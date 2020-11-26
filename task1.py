@@ -25,11 +25,12 @@ class Task1:
     def __try_solve(self, user_id, show_untagged: bool) -> dict:
         try:
             return {'groups': self.__solve(user_id, show_untagged)}
-        except Exception as e:
+        except VkApiError as e:
             return {'error': e}
 
     def __solve(self, user_id, show_untagged: bool) -> dict:
-        groups = self.__vkApiWrapper.try_get_user_groups(self.__access_token, user_id)
+        group_ids = self.__vkApiWrapper.try_get_user_group_ids(self.__access_token, user_id)
+        groups = self.__vkApiWrapper.get_groups_info(self.__access_token, group_ids)
         res = map(
             lambda g: (g['id'], self.__analyze_group(g)),
             groups

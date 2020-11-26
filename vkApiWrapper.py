@@ -136,11 +136,6 @@ class VkApiWrapper:
         object_id = response['object_id']
         return object_id
 
-    @staticmethod
-    def __get_fields():
-        fields = ['age_limits', 'description', 'main_album_id', 'status']
-        return ','.join(fields)
-
     def get_user_subscription_ids(self, access_token: str, user_id) -> list:
         """
         https://vk.com/dev/users.getSubscriptions
@@ -170,6 +165,26 @@ class VkApiWrapper:
         except VkApiError:
             subs = self.get_user_subscription_ids(access_token, user_id)
             return subs
+
+    # TODO
+    def get_groups_extended_info(self, access_token: str, group_ids):
+        pass
+
+    @staticmethod
+    def __chunk_data(data, chunk_size):
+        for i in range(0, len(data), chunk_size):
+            yield data[i:i + chunk_size]
+
+    def get_groups_info(self, access_token: str, group_ids):
+        group_ids_chunks = list(self.__chunk_data(group_ids, 500))
+        res = []
+        for chunk in group_ids_chunks:
+            group_ids_str = ','.join(map(str, chunk))
+            fields = 'activity,age_limits,description,status'
+            response = self.__send(vkApi.get_groups_by_id, access_token=access_token, group_ids=group_ids_str,
+                                   fields=fields)
+            res.extend(response.response)
+        return res
 
     def get_friends(self, access_token: str, user_id):
         response = self.__send(vkApi.get_friends, access_token=access_token, user_id=user_id, count=10000)

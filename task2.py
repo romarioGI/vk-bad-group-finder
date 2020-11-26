@@ -1,5 +1,5 @@
 from task1 import Task1
-from vkApiWrapper import VkApiWrapper
+from vkApiWrapper import VkApiWrapper, VkApiError
 
 
 class Task2:
@@ -19,7 +19,7 @@ class Task2:
     def __try_solve(self, user_id, show_untagged: bool, ignore_private_accounts: bool, ignore_empty_friends: bool):
         try:
             return {'friends': self.__solve(user_id, show_untagged, ignore_private_accounts, ignore_empty_friends)}
-        except Exception as e:
+        except VkApiError as e:
             return {'error': e}
 
     def __solve(self, user_id, show_untagged: bool, ignore_private_accounts: bool, ignore_empty_friends: bool) -> dict:
