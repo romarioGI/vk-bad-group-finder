@@ -46,3 +46,14 @@ def __is_contain_words(obj, words: list):
             if __is_contain_words(o, words):
                 return True
     return False
+
+
+def __get_all_words(obj):
+    if isinstance(obj, str):
+        yield obj
+    elif isinstance(obj, list):
+        for o in obj:
+            yield from __get_all_words(o)
+    elif isinstance(obj, dict):
+        for o in obj.values():
+            yield from __get_all_words(o)

@@ -16,15 +16,15 @@ class Task1:
         )
         if ignore_private_accounts:
             res = filter(
-                lambda i: not (isinstance(i[1], VkApiError)
-                               and i[1].error_code == self.__PRIVATE_PROFILE_ERROR_CODE),
+                lambda i: not ('error' in i[1] and isinstance(i[1]['error'], VkApiError)
+                               and i[1]['error'].error_code == self.__PRIVATE_PROFILE_ERROR_CODE),
                 res
             )
         return dict(res)
 
-    def __try_solve(self, user_id, show_untagged: bool):
+    def __try_solve(self, user_id, show_untagged: bool) -> dict:
         try:
-            return self.__solve(user_id, show_untagged)
+            return {'groups': self.__solve(user_id, show_untagged)}
         except Exception as e:
             return {'error': e}
 
@@ -36,7 +36,7 @@ class Task1:
         )
         if not show_untagged:
             res = filter(
-                lambda g: 'tags' in g[1] and len(g[1]['tags']) != 0,
+                lambda g: not (('tags' in g[1]) and (len(g[1]['tags'])) == 0),
                 res
             )
 
