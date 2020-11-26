@@ -141,47 +141,34 @@ class VkApiWrapper:
         fields = ['age_limits', 'description', 'main_album_id', 'status']
         return ','.join(fields)
 
-    # TODO: использовать wall.get, wall.search, video.get, мб через хранимые процедуры VK для оптимизации
-    def get_user_subscriptions(self, access_token: str, user_id) -> list:
+    def get_user_subscription_ids(self, access_token: str, user_id) -> list:
         """
         https://vk.com/dev/users.getSubscriptions
         """
-        fields = self.__get_fields()
-        res = []
-        while True:
-            response = self.__send(vkApi.get_user_subscriptions, access_token=access_token, user_id=user_id, extended=1,
-                                   offset=len(res), count=200, fields=fields)
-            cur = response['items']
-            res.extend(cur)
-            if len(res) >= response['count']:
-                break
-        res = filter(
-            lambda s: s['type'] in ['group', 'page', 'event'],
-            res
-        )
-        return list(res)
+        response = self.__send(vkApi.get_user_subscriptions, access_token=access_token, user_id=user_id, extended=0)
+        res = response['groups']['items']
+        return res
 
-    def get_user_groups(self, access_token: str, user_id) -> list:
+    def get_user_group_ids(self, access_token: str, user_id) -> list:
         """
         https://vk.com/dev/groups.get
         """
-        fields = self.__get_fields()
         res = []
         while True:
-            response = self.__send(vkApi.get_user_groups, access_token=access_token, user_id=user_id, extended=1,
-                                   fields=fields, offset=len(res), count=1000)
+            response = self.__send(vkApi.get_user_groups, access_token=access_token, user_id=user_id, extended=0,
+                                   offset=len(res), count=1000)
             cur = response['items']
             res.extend(cur)
             if len(res) >= response['count']:
                 break
         return res
 
-    def try_get_user_groups(self, access_token: str, user_id) -> list:
+    def try_get_user_group_ids(self, access_token: str, user_id) -> list:
         try:
-            groups = self.get_user_groups(access_token, user_id)
+            groups = self.get_user_group_ids(access_token, user_id)
             return groups
         except VkApiError:
-            subs = self.get_user_subscriptions(access_token, user_id)
+            subs = self.get_user_subscription_ids(access_token, user_id)
             return subs
 
     def get_friends(self, access_token: str, user_id):

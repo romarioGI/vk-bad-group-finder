@@ -41,3 +41,18 @@ def __get_all_words(obj):
     elif isinstance(obj, dict):
         for o in obj.values():
             yield from __get_all_words(o)
+
+
+class Classifier:
+    def __init__(self, train_data: list):
+        groups, types = __unzip_train_data(train_data)
+        self.__clf = LogisticRegression()
+        self.__clf.fit(groups, types)
+
+    @staticmethod
+    def __unzip_train_data(train_data: list):
+        groups, types = [], []
+        for (group, t) in train_data:
+            groups.append(group)
+            types.append(t)
+        return groups, types
