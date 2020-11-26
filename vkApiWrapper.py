@@ -2,6 +2,9 @@ import random
 import webbrowser
 from threading import Thread, Lock
 from time import sleep
+from collections import deque
+from datetime import datetime
+
 
 import requests
 
@@ -68,11 +71,34 @@ class VkApiRequestSender:
         self.attempts_number = attempts_number
         if request_per_second_limit < 1:
             raise Exception('request_per_second_limit should be not less then 1')
-        self.__request_between_time = 1.0 / request_per_second_limit
+        self.request_per_second_limit = request_per_second_limit
+        self.__request_between_time = 1.0 / self.request_per_second_limit
+        self.__request_queue = deque()
+        self.__queue_lock = Lock()
+
+    def __calc_sleep_time(self):
+        self.__queue_lock.acquire()
+        try:
+            now = datetime.now()
+            self.__request_queue.append(now)
+            while True:
+                front = self.__request_queue[0]
+                seconds = (now - front).total_seconds()
+                if seconds > 1:
+                    self.__request_queue.popleft()
+                else:
+                    break
+            if len(self.__request_queue) <= self.request_per_second_limit:
+                seconds = 0
+            return seconds
+        finally:
+            self.__queue_lock.release()
 
     def send(self, f):
         fails_count = 0
         last_e = None
+        sleep_time = self.__calc_sleep_time()
+        sleep(sleep_time)
         while fails_count < self.attempts_number:
             try:
                 return f()
@@ -80,18 +106,16 @@ class VkApiRequestSender:
                 if e.error_code == self.__TOO_MANY_REQUESTS_ERROR_CODE:
                     last_e = e
                     fails_count += 1
-                    sleep(fails_count)
+                    sleep(self.__request_between_time)
                 else:
                     raise e
-            finally:
-                sleep(self.__request_between_time)
 
         raise last_e
 
 
 class VkApiWrapper:
-    def __init__(self, attempts_number: int = 2, request_per_second_limit: int = 3):
-        self.__sender = VkApiRequestSender(attempts_number, request_per_second_limit)
+    def __init__(self, request_attempts_number: int = 1, request_per_second_limit: int = 3):
+        self.__sender = VkApiRequestSender(request_attempts_number, request_per_second_limit)
 
     def __send(self, api_request_func, **params) -> VkApiResponse:
         def f():
