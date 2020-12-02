@@ -30,7 +30,7 @@ class Task1:
 
     def __solve(self, user_id, show_untagged: bool) -> dict:
         group_ids = self.__vkApiWrapper.try_get_user_group_ids(self.__access_token, user_id)
-        groups = self.__vkApiWrapper.get_groups_info(self.__access_token, group_ids)
+        groups = self.__vkApiWrapper.get_groups_extended_info(self.__access_token, group_ids)
         res = map(
             lambda g: (g['id'], self.__analyze_group(g)),
             groups

@@ -14,10 +14,8 @@ from authRequestRedirectServer import AuthRequestRedirectServer
 class VkApiError(Exception):
     def __init__(self, error_response):
         self.error_code = error_response['error_code']
-        self.error_msg = error_response['error_msg']
-        self.request_params = error_response['request_params']
-        message = f'{str(error_response)}\n see https://vk.com/dev/errors'
-        super().__init__(message)
+        self.error_msg = f'{str(error_response)}\n see https://vk.com/dev/errors'
+        super().__init__(self.error_msg)
 
 
 class VkApiResponse:
@@ -25,6 +23,9 @@ class VkApiResponse:
         response = api_response.json()
         if 'error' in response:
             raise VkApiError(response['error'])
+        # TODO
+        # elif 'execute_errors' in response:
+        #    raise VkApiError(response['execute_errors'][0])
         elif 'response' in response:
             self.__response = response['response']
         else:
@@ -83,13 +84,22 @@ class VkApiRequestSender:
             while True:
                 front = self.__request_queue[0]
                 seconds = (now - front).total_seconds()
-                if seconds > 1:
+                if seconds > 1.0:
                     self.__request_queue.popleft()
                 else:
                     break
             if len(self.__request_queue) <= self.request_per_second_limit:
                 seconds = 0
             return seconds
+        finally:
+            self.__request_queue.pop()
+            self.__queue_lock.release()
+
+    def __add_sending(self):
+        self.__queue_lock.acquire()
+        try:
+            now = datetime.now()
+            self.__request_queue.append(now)
         finally:
             self.__queue_lock.release()
 
@@ -100,7 +110,9 @@ class VkApiRequestSender:
         sleep(sleep_time)
         while fails_count < self.attempts_number:
             try:
-                return f()
+                res = f()
+                self.__add_sending()
+                return res
             except VkApiError as e:
                 if e.error_code == self.__TOO_MANY_REQUESTS_ERROR_CODE:
                     last_e = e
@@ -113,7 +125,7 @@ class VkApiRequestSender:
 
 
 class VkApiWrapper:
-    def __init__(self, request_attempts_number: int = 1, request_per_second_limit: int = 3):
+    def __init__(self, request_attempts_number: int = 2, request_per_second_limit: int = 3):
         self.__sender = VkApiRequestSender(request_attempts_number, request_per_second_limit)
 
     def __send(self, api_request_func, **params) -> VkApiResponse:
@@ -166,9 +178,50 @@ class VkApiWrapper:
             subs = self.get_user_subscription_ids(access_token, user_id)
             return subs
 
-    # TODO
     def get_groups_extended_info(self, access_token: str, group_ids):
-        pass
+        groups_info = self.get_groups_info(access_token, group_ids)
+        groups_info = map(lambda g: self.__extend_group_info(access_token, g), groups_info)
+        return list(groups_info)
+
+    # TODO оказывается есть лимит на get videos
+    def __extend_group_info(self, access_token: str, group):
+        return group
+        group_id = group['id']
+        group['videos'] = self.__get_videos_comments(access_token, group_id)
+        return group
+
+    def __get_videos_comments(self, access_token: str, group_id, ):
+        """
+            https://vk.com/dev/execute
+            function videos_comments:
+            var owner_id = Args.owner_id;
+            var videos = API.video.get({"owner_id":owner_id, "count":10});
+            var videos_ids = videos.items@.id;
+            var i = 0;
+            var res = [];
+            while (i < videos_ids.length){
+              var comments = API.video.getComments(
+              {
+                "owner_id":owner_id,
+                "video_id":videos_ids[i],
+                "count": 10
+              });
+              res.push({
+                "id": videos_ids[i],
+                "comments": comments.items@.text
+
+              });
+              i = i + 1;
+            }
+
+            return res;
+        """
+        params = {
+            'owner_id': -group_id
+        }
+        response = self.__send(vkApi.get_api_request, method_name='execute.videos_comments', access_token=access_token,
+                               params=params)
+        return response.response
 
     @staticmethod
     def __chunk_data(data, chunk_size):

@@ -56,17 +56,14 @@ class Classifier:
     def __init__(self, vkApiWrapper: VkApiWrapper, access_token: str, dataset: dict):
         groups_screen_names = list(dataset.keys())
 
-        groups = vkApiWrapper.get_groups_info(access_token, groups_screen_names)
+        groups = vkApiWrapper.get_groups_extended_info(access_token, groups_screen_names)
         groups_types = list(map(lambda g: dataset[g['screen_name']], groups))
 
-        groups_info = list(map(lambda g: ''.join(self.__get_all_words(g)), groups))
-
         cv = CountVectorizer(analyzer='char', ngram_range=(3, 3), min_df=0.1, max_df=0.9)
-
-        groups_info = map(lambda text: re.sub(r'[^0-9А-яЁёa-zA-Z]+', '', text), groups_info)
+        groups_info = list(map(lambda g: ' '.join(self.__get_all_words(g)), groups))
         groups_info = cv.fit_transform(groups_info)
 
-        clf = LogisticRegression()
+        clf = LogisticRegression(max_iter=200)
         clf.fit(groups_info, groups_types)
 
         self.__clf = clf
@@ -75,7 +72,7 @@ class Classifier:
     @classmethod
     def __get_all_words(cls, obj):
         if isinstance(obj, str):
-            yield obj
+            yield re.sub(r'[^0-9а-яёa-z]+', '', obj.lower())
         elif isinstance(obj, list):
             for o in obj:
                 yield from cls.__get_all_words(o)

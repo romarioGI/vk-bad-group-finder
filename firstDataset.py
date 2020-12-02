@@ -37,7 +37,7 @@ non_group_screen_names = ['yarchat', 'baza_chto_gde_kogda', 'voprosi.svoya.igra'
                           'psy_sluzhba', 'public178021929', 'beauty_bar_ed_style',
                           'confirmit_yaroslavl', 'event133646054', 'devbattle.official',
                           'club44019163', 'vii_ko', 'mykorean', 'jfestival', 'nippon_gatari', '5minutestotokyo',
-                          'howtonihongo'
+                          'howtonihongo', 'jumoreski'
                           ]
 non_tag = ''
 non_dataset = __set_tag(non_group_screen_names, non_tag)
