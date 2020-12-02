@@ -3,6 +3,7 @@ import re
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
+import firstDataset
 from vkApiWrapper import VkApiWrapper
 
 
@@ -52,36 +53,22 @@ def __get_all_words(obj):
 
 
 class Classifier:
-    def __init__(self, vkApiWrapper: VkApiWrapper, access_token: str):
-        opposite_group_screen_names = ['teamnavalny', 'gulag.media', 'navalny.group', 'navalny_live', 'vesna_democrat',
-                                       'maximkatz', 'club23017477', 'tvrain', 'club43854092', 'oppositionofrussia',
-                                       'limonov_eduard', 'navalnyclub', 'corrupcia_in_russia', 'rf_pravda']
-        opposite_group_types = ['OPPOSITE'] * len(opposite_group_screen_names)
+    def __init__(self, vkApiWrapper: VkApiWrapper, access_token: str, dataset: dict):
+        groups_screen_names = list(dataset.keys())
 
-        erotic_group_screen_names = ['tutsexx', 'posliye', 'pornobrazzersvk', 'nu_art_erotica',
-                                     'erotique_journal', 'ledesirerotique', 'derzkach', 'eroticheskie_gifki',
-                                     'sexliborg']
-        erotic_group_types = ['EROTIC'] * len(erotic_group_screen_names)
-
-        non_opposite_and_erotic_group_screen_names = ['yarchat', 'voprosi.svoya.igra', 'math.uniyar.contest',
-                                                      'yaroslavl_state_university', 'just_str', 'tproger',
-                                                      'kuplinovplay', 'olimpiprofi', 'citiesskylines', 'openyarru',
-                                                      'cerceau', 'ctranno', 'pornopunk', 'solovievlive']
-        non_opposite_and_erotic_group_types = ['NON'] * len(non_opposite_and_erotic_group_screen_names)
-
-        groups_screen_names = opposite_group_screen_names + erotic_group_screen_names + non_opposite_and_erotic_group_screen_names
         groups = vkApiWrapper.get_groups_info(access_token, groups_screen_names)
+        groups_types = list(map(lambda g: dataset[g['screen_name']], groups))
 
         groups_info = list(map(lambda g: ''.join(self.__get_all_words(g)), groups))
-        groups_types = opposite_group_types + erotic_group_types + non_opposite_and_erotic_group_types
 
-        cv = CountVectorizer(analyzer='char', ngram_range=(2, 3), min_df=0.1, max_df=0.9)
+        cv = CountVectorizer(analyzer='char', ngram_range=(3, 3), min_df=0.1, max_df=0.9)
 
         groups_info = map(lambda text: re.sub(r'[^0-9А-яЁёa-zA-Z]+', '', text), groups_info)
         groups_info = cv.fit_transform(groups_info)
 
         clf = LogisticRegression()
         clf.fit(groups_info, groups_types)
+
         self.__clf = clf
         self.__cv = cv
 
@@ -104,9 +91,12 @@ class Classifier:
 
 
 def get_ml_content_analyzer(vkApiWrapper: VkApiWrapper, access_token: str):
-    classifier = Classifier(vkApiWrapper, access_token)
+    classifier = Classifier(vkApiWrapper, access_token, firstDataset.dataset)
 
     def f(group):
-        return [f'ML-{classifier.predict(group)}']
+        tag = classifier.predict(group)
+        if tag == firstDataset.non_tag:
+            return []
+        return [f'ML-{tag}']
 
     return f
