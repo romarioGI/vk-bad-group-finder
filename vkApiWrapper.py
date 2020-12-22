@@ -185,10 +185,11 @@ class VkApiWrapper:
     def __extend_group_info(self, access_token: str, group):
         group_id = group['id']
         group['videos'] = self.__get_videos_comments(access_token, group_id)
+        group['photos'] = self.__get_photos_comments(access_token, group_id)
         return group
 
     # оказывается есть лимит на get videos, про который не написано в документации
-    def __get_videos_comments(self, access_token: str, group_id, ):
+    def __get_videos_comments(self, access_token: str, group_id):
         """
             https://vk.com/dev/execute
             function videos_comments:
@@ -218,6 +219,43 @@ class VkApiWrapper:
             'owner_id': -group_id
         }
         response = self.__send(vkApi.get_api_request, method_name='execute.videos_comments', access_token=access_token,
+                               params=params)
+        return response.response
+
+    def __get_photos_comments(self, access_token: str, group_id):
+        """
+            https://vk.com/dev/execute
+            function photos_comments:
+                var owner_id = Args.owner_id;
+                var photos = API.photos.get({
+                    "owner_id":owner_id,
+                    "count":20,
+                    "album_id": "wall"
+                });
+                var photos_ids = photos.items@.id;
+                var i = 0;
+                var res = [];
+                while (i < photos_ids.length){
+                  var comments = API.photos.getComments(
+                  {
+                    "owner_id":owner_id,
+                    "photo_id":photos_ids[i],
+                    "count": 10
+                  });
+                  res.push({
+                    "id": photos_ids[i],
+                    "comments": comments.items@.text
+
+                  });
+                  i = i + 1;
+                }
+
+                return res;
+        """
+        params = {
+            'owner_id': -group_id
+        }
+        response = self.__send(vkApi.get_api_request, method_name='execute.photos_comments', access_token=access_token,
                                params=params)
         return response.response
 

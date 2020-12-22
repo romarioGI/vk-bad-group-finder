@@ -9,14 +9,14 @@ from vkApiWrapper import VkApiWrapper
 
 
 def erotic_content_analyzer(group) -> list:
-    if is_contain_words(group, ['порн', 'видео для взрослых', 'эротик']):
-        return ['EROTIC']
+    if is_contain_words(group, ['порн', 'видео для взрослых', 'эротик', '18+', 'пошл', 'хочу тебя']):
+        return ['ADULT']
     return []
 
 
 def opposition_content_analyzer(group) -> list:
-    if is_contain_words(group, ['оппозиция', 'навальный']):
-        return ['OPPOSITION']
+    if is_contain_words(group, ['оппозиция', 'навальный', 'против путина', 'путин вор', 'корруп', 'митинг', 'пикет']):
+        return ['POLITIC']
     return []
 
 
