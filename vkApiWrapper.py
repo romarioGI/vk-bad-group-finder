@@ -18,14 +18,13 @@ class VkApiError(Exception):
         super().__init__(self.error_msg)
 
 
+# также бывают execute_errors, которые возникают при исполнении кода на стороне VK
+# при необходисмости их можно обрабатывать
 class VkApiResponse:
     def __init__(self, api_response: requests.Response):
         response = api_response.json()
         if 'error' in response:
             raise VkApiError(response['error'])
-        # TODO
-        # elif 'execute_errors' in response:
-        #    raise VkApiError(response['execute_errors'][0])
         elif 'response' in response:
             self.__response = response['response']
         else:
@@ -183,13 +182,12 @@ class VkApiWrapper:
         groups_info = map(lambda g: self.__extend_group_info(access_token, g), groups_info)
         return list(groups_info)
 
-    # TODO оказывается есть лимит на get videos
     def __extend_group_info(self, access_token: str, group):
-        return group
         group_id = group['id']
         group['videos'] = self.__get_videos_comments(access_token, group_id)
         return group
 
+    # оказывается есть лимит на get videos, про который не написано в документации
     def __get_videos_comments(self, access_token: str, group_id, ):
         """
             https://vk.com/dev/execute

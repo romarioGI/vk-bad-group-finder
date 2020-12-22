@@ -21,6 +21,7 @@ class Handler(BaseHTTPRequestHandler):
             res[key] = val[0]
         return res
 
+    # не переименовывать, иначе сервер не найдет этот метод
     def do_GET(self):
         url = urlparse(self.path)
         if url.path == "/":
