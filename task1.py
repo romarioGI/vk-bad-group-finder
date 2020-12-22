@@ -9,9 +9,10 @@ class Task1:
         self.__content_analyzers = content_analyzers
         self.__vkApiWrapper = vkApiWrapper
 
-    def solve(self, users_id: list, show_untagged: bool = False, ignore_private_accounts: bool = True) -> dict:
+    def solve(self, users_id: list, show_untagged: bool = False, ignore_private_accounts: bool = True,
+              use_extended_group_info: bool = False) -> dict:
         res = map(
-            lambda user_id: (user_id, self.__try_solve(user_id, show_untagged)),
+            lambda user_id: (user_id, self.__try_solve(user_id, show_untagged, use_extended_group_info)),
             users_id
         )
         if ignore_private_accounts:
@@ -22,14 +23,18 @@ class Task1:
             )
         return dict(res)
 
-    def __try_solve(self, user_id, show_untagged: bool) -> dict:
+    def __try_solve(self, user_id, show_untagged: bool, use_extended_group_info: bool) -> dict:
         try:
-            return {'groups': self.__solve(user_id, show_untagged)}
-        except Exception as e:
+            return {'groups': self.__solve(user_id, show_untagged, use_extended_group_info)}
+        except VkApiError as e:
             return {'error': e}
 
-    def __solve(self, user_id, show_untagged: bool) -> dict:
-        groups = self.__vkApiWrapper.try_get_user_groups(self.__access_token, user_id)
+    def __solve(self, user_id, show_untagged: bool, use_extended_group_info: bool) -> dict:
+        group_ids = self.__vkApiWrapper.try_get_user_group_ids(self.__access_token, user_id)
+        if use_extended_group_info:
+            groups = self.__vkApiWrapper.get_groups_extended_info(self.__access_token, group_ids)
+        else:
+            groups = self.__vkApiWrapper.get_groups_info(self.__access_token, group_ids)
         res = map(
             lambda g: (g['id'], self.__analyze_group(g)),
             groups

@@ -51,6 +51,19 @@ def get_user_groups(access_token: str, user_id=None, extended=None, filter=None,
     return get_api_request(method_name, access_token, params)
 
 
+def get_groups_by_id(access_token: str, group_ids=None, group_id=None, fields=None):
+    """
+    https://vk.com/dev/groups.getById
+    """
+    params = {
+        'group_ids': group_ids,
+        'group_id': group_id,
+        'fields': fields
+    }
+    method_name = 'groups.getById'
+    return get_api_request(method_name, access_token, params)
+
+
 def get_friends(access_token: str, user_id=None, order=None, list_id=None, count=None, offset=None, fields=None,
                 name_case=None, ref=None):
     """
