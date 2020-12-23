@@ -2,20 +2,20 @@ import re
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 import firstDataset
 from vkApiWrapper import VkApiWrapper
 
 
 def erotic_content_analyzer(group) -> list:
-    if is_contain_words(group, ['порн', 'видео для взрослых', 'эротик', '18+', 'пошл', 'хочу тебя']):
+    if is_contain_words(group, ['порн', 'видео для взрослых', 'эротик', 'пошл', 'porn', 'erotic']):
         return ['ADULT']
     return []
 
 
 def opposition_content_analyzer(group) -> list:
-    if is_contain_words(group, ['оппозиция', 'навальный', 'против путина', 'путин вор', 'корруп', 'митинг', 'пикет']):
+    if is_contain_words(group, ['оппозиция', 'навальн', 'против путина', 'путин вор', 'корруп', 'митинг', 'пикет']):
         return ['POLITIC']
     return []
 
@@ -49,6 +49,8 @@ def __get_all_words(obj):
         for o in obj:
             yield from __get_all_words(o)
     elif isinstance(obj, dict):
+        for o in obj.keys():
+            yield from __get_all_words(o)
         for o in obj.values():
             yield from __get_all_words(o)
 
@@ -65,10 +67,10 @@ class Classifier:
         groups_types = list(map(lambda g: dataset[g['screen_name']], groups))
 
         cv = CountVectorizer(analyzer='char', ngram_range=(3, 3), min_df=0.1, max_df=0.9)
-        groups_info = list(map(lambda g: ' '.join(self.__get_all_words(g)), groups))
+        groups_info = list(map(lambda g: ''.join(self.__get_all_words(g)), groups))
         groups_info = cv.fit_transform(groups_info)
 
-        clf = LogisticRegression(max_iter=200)
+        clf = LogisticRegression(max_iter=300)
         clf.fit(groups_info, groups_types)
 
         self.__clf = clf
@@ -94,7 +96,6 @@ class Classifier:
     @staticmethod
     def prediction_quality_report(answers, predictions) -> str:
         res = f'accuracy:{accuracy_score(answers, predictions)}\n'
-        res += f'f1_score:{f1_score(answers, predictions, average="weighted")}\n'
         res += f'{classification_report(answers, predictions)}\n'
         res += f'{confusion_matrix(answers, predictions)}'
         return res
