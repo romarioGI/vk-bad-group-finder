@@ -36,8 +36,8 @@ class AbstractClassifier(ABC):
         pass
 
     # TODO в attachments тоже есть полезная инфа
-    @classmethod
-    def __get_useful_info(cls, group) -> str:
+    @staticmethod
+    def get_useful_info(group) -> str:
         res = [group['name'], group['screen_name'], group['activity'], group['description'], group['status']]
         if 'wall' in group:
             for p in group['wall']:

@@ -83,7 +83,7 @@ def make_and_serialize(use_extend_group_info=True):
     access_token = get_access_token(CLIENT_ID, CLIENT_SECRET)
     vkApiWrapper = VkApiWrapper(access_token)
     dataset = make(vkApiWrapper, use_extend_group_info)
-    IOHelper.serialize(dataset, f'dataset_{use_extend_group_info}.json', True)
+    IOHelper.json_serialize(dataset, f'dataset_{use_extend_group_info}.json', True)
 
 
 def split_dataset(dataset: tuple[list[dict], list[int]], p: float = 0.7):
