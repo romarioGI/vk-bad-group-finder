@@ -35,14 +35,14 @@ def get_user_subscriptions(access_token: str, user_id=None, extended=None, offse
     return get_api_request(method_name, access_token, params)
 
 
-def get_user_groups(access_token: str, user_id=None, extended=None, filter=None, fields=None, offset=None, count=None):
+def get_user_groups(access_token: str, user_id=None, extended=None, filter_=None, fields=None, offset=None, count=None):
     """
     https://vk.com/dev/groups.get
     """
     params = {
         'user_id': user_id,
         'extended': extended,
-        'filter': filter,
+        'filter': filter_,
         'fields': fields,
         'offset': offset,
         'count': count
@@ -83,6 +83,24 @@ def get_friends(access_token: str, user_id=None, order=None, list_id=None, count
     return get_api_request(method_name, access_token, params)
 
 
+def get_wall(access_token: str, owner_id=None, domain=None, offset=None, count=None, filter_=None, extended=None,
+             fields=None):
+    """
+    https://vk.com/dev/wall.get
+    """
+    params = {
+        'owner_id': owner_id,
+        'domain': domain,
+        'offset': offset,
+        'count': count,
+        'filter': filter_,
+        'extended': extended,
+        'fields': fields
+    }
+    method_name = 'wall.get'
+    return get_api_request(method_name, access_token, params)
+
+
 def __params_to_str(params: dict) -> str:
     params = filter(
         lambda p: p[1] is not None,
@@ -94,7 +112,12 @@ def __params_to_str(params: dict) -> str:
     ))
 
 
-def build_get_access_code_request_str(client_id, redirect_uri: str, scope) -> str:
+def __build_auth_request_str(method_name: str, params: dict):
+    params_str = __params_to_str(params)
+    return f'https://oauth.vk.com/{method_name}?{params_str}'
+
+
+def build_get_access_code_request_str(client_id: str, redirect_uri: str, scope: int) -> str:
     params = {
         'client_id': client_id,
         'redirect_uri': redirect_uri,
@@ -104,11 +127,10 @@ def build_get_access_code_request_str(client_id, redirect_uri: str, scope) -> st
         'v': API_VERSION
     }
     method = 'authorize'
-    params_str = __params_to_str(params)
-    return f'https://oauth.vk.com/{method}?{params_str}'
+    return __build_auth_request_str(method, params)
 
 
-def build_get_access_token_request_str(client_id, client_secret, redirect_uri: str, code) -> str:
+def build_get_access_token_request_str(client_id: str, client_secret: str, redirect_uri: str, code: str) -> str:
     params = {
         'client_id': client_id,
         'client_secret': client_secret,
@@ -117,5 +139,4 @@ def build_get_access_token_request_str(client_id, client_secret, redirect_uri: s
         'v': API_VERSION
     }
     method = 'access_token'
-    params_str = __params_to_str(params)
-    return f'https://oauth.vk.com/{method}?{params_str}'
+    return __build_auth_request_str(method, params)

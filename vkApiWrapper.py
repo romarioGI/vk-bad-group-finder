@@ -1,54 +1,15 @@
 import random
 import webbrowser
-from collections import deque
-from datetime import datetime
+from collections.abc import Callable
 from threading import Thread, Lock
-from time import sleep
 
 import requests
 
 import vkApi
 from authRequestRedirectServer import AuthRequestRedirectServer
-
-
-class VkApiError(Exception):
-    def __init__(self, error_response):
-        self.error_code = error_response['error_code']
-        self.error_msg = f'{str(error_response)}\n see https://vk.com/dev/errors'
-        super().__init__(self.error_msg)
-
-
-# также бывают execute_errors, которые возникают при исполнении кода на стороне VK
-# при необходисмости их можно обрабатывать
-class VkApiResponse:
-    def __init__(self, api_response: requests.Response):
-        response = api_response.json()
-        if 'error' in response:
-            raise VkApiError(response['error'])
-        elif 'response' in response:
-            self.__response = response['response']
-        else:
-            raise Exception('wrong response format')
-        if isinstance(self.response, dict):
-            self.__is_object = True
-        else:
-            self.__is_object = False
-
-    @property
-    def is_empty(self):
-        response = self.response
-        return (isinstance(response, list) or isinstance(response, dict)) and len(response) == 0
-
-    @property
-    def response(self):
-        return self.__response
-
-    def __getitem__(self, attribute: str):
-        if not self.__is_object:
-            raise Exception('response is not object (dict) and does not have the any attributes')
-        if attribute in self.response:
-            return self.response[attribute]
-        raise AttributeError(f'response does not have the {attribute} attribute')
+from vkApiError import VkApiError
+from vkApiRequestSender import VkApiRequestSender
+from vkApiResponse import VkApiResponse
 
 
 class UserNotFound(Exception):
@@ -56,89 +17,24 @@ class UserNotFound(Exception):
         super().__init__(f'user with {screen_name} not found')
 
 
-class TimeoutExpiredError(Exception):
-    def __init__(self, timeout):
-        super().__init__(f'the timeout ({timeout}) has expired')
-
-
-class VkApiRequestSender:
-    __TOO_MANY_REQUESTS_ERROR_CODE = 6
-
-    def __init__(self, attempts_number: int, request_per_second_limit: int):
-        if attempts_number < 1:
-            raise Exception('attempts_number should be not less then 1')
-        self.attempts_number = attempts_number
-        if request_per_second_limit < 1:
-            raise Exception('request_per_second_limit should be not less then 1')
-        self.request_per_second_limit = request_per_second_limit
-        self.__request_between_time = 1.0 / self.request_per_second_limit
-        self.__request_queue = deque()
-        self.__queue_lock = Lock()
-
-    def __calc_sleep_time(self):
-        self.__queue_lock.acquire()
-        try:
-            now = datetime.now()
-            self.__request_queue.append(now)
-            while True:
-                front = self.__request_queue[0]
-                seconds = (now - front).total_seconds()
-                if seconds > 1.0:
-                    self.__request_queue.popleft()
-                else:
-                    break
-            if len(self.__request_queue) <= self.request_per_second_limit:
-                seconds = 0
-            return seconds
-        finally:
-            self.__request_queue.pop()
-            self.__queue_lock.release()
-
-    def __add_sending(self):
-        self.__queue_lock.acquire()
-        try:
-            now = datetime.now()
-            self.__request_queue.append(now)
-        finally:
-            self.__queue_lock.release()
-
-    def send(self, f):
-        fails_count = 0
-        last_e = None
-        sleep_time = self.__calc_sleep_time()
-        sleep(sleep_time)
-        while fails_count < self.attempts_number:
-            try:
-                res = f()
-                self.__add_sending()
-                return res
-            except VkApiError as e:
-                if e.error_code == self.__TOO_MANY_REQUESTS_ERROR_CODE:
-                    last_e = e
-                    fails_count += 1
-                    sleep(self.__request_between_time)
-                else:
-                    raise e
-
-        raise last_e
-
-
 class VkApiWrapper:
-    def __init__(self, request_attempts_number: int = 2, request_per_second_limit: int = 3):
+    def __init__(self, access_token: str, request_attempts_number: int = 2, request_per_second_limit: int = 3):
+        self.__access_token = access_token
         self.__sender = VkApiRequestSender(request_attempts_number, request_per_second_limit)
 
-    def __send(self, api_request_func, **params) -> VkApiResponse:
+    def __send(self, api_request_func: Callable[[...], requests.Response], **params) -> VkApiResponse:
         def f():
             response = api_request_func(**params)
             return VkApiResponse(response)
 
         return self.__sender.send(f)
 
-    def get_user_id(self, access_token: str, screen_name: str) -> int:
+    def get_user_id(self, screen_name: str) -> int:
         """
         https://vk.com/dev/utils.resolveScreenName
         """
-        response = self.__send(vkApi.get_utils_resolve_screen_name, access_token=access_token, screen_name=screen_name)
+        response = self.__send(vkApi.get_utils_resolve_screen_name, access_token=self.__access_token,
+                               screen_name=screen_name)
         if response.is_empty:
             raise UserNotFound(screen_name)
         object_type = response['type']
@@ -147,21 +43,22 @@ class VkApiWrapper:
         object_id = response['object_id']
         return object_id
 
-    def get_user_subscription_ids(self, access_token: str, user_id) -> list:
+    def get_user_subscription_ids(self, user_id) -> list:
         """
         https://vk.com/dev/users.getSubscriptions
         """
-        response = self.__send(vkApi.get_user_subscriptions, access_token=access_token, user_id=user_id, extended=0)
+        response = self.__send(vkApi.get_user_subscriptions, access_token=self.__access_token, user_id=user_id,
+                               extended=0)
         res = response['groups']['items']
         return res
 
-    def get_user_group_ids(self, access_token: str, user_id) -> list:
+    def get_user_group_ids(self, user_id) -> list:
         """
         https://vk.com/dev/groups.get
         """
         res = []
         while True:
-            response = self.__send(vkApi.get_user_groups, access_token=access_token, user_id=user_id, extended=0,
+            response = self.__send(vkApi.get_user_groups, access_token=self.__access_token, user_id=user_id, extended=0,
                                    offset=len(res), count=1000)
             cur = response['items']
             res.extend(cur)
@@ -169,181 +66,129 @@ class VkApiWrapper:
                 break
         return res
 
-    def try_get_user_group_ids(self, access_token: str, user_id) -> list:
+    def try_get_user_group_ids(self, user_id) -> list:
         try:
-            groups = self.get_user_group_ids(access_token, user_id)
+            groups = self.get_user_group_ids(user_id)
             return groups
         except VkApiError:
-            subs = self.get_user_subscription_ids(access_token, user_id)
+            subs = self.get_user_subscription_ids(user_id)
             return subs
 
-    def get_groups_extended_info(self, access_token: str, group_ids):
-        groups_info = self.get_groups_info(access_token, group_ids)
-        groups_info = map(lambda g: self.__extend_group_info(access_token, g), groups_info)
+    def get_groups_extended_info(self, group_ids):
+        """
+        use info from wall
+        """
+
+        def __extend_group_info(group):
+            group_id = group['id']
+            group['wall'] = self.get_group_wall(group_id)
+            return group
+
+        groups_info = self.get_groups_info(group_ids)
+        groups_info = map(lambda g: __extend_group_info(g), groups_info)
         return list(groups_info)
-
-    def __extend_group_info(self, access_token: str, group):
-        group_id = group['id']
-        group['videos'] = self.__get_videos_comments(access_token, group_id)
-        group['photos'] = self.__get_photos_comments(access_token, group_id)
-        return group
-
-    # оказывается есть лимит на get videos, про который не написано в документации
-    def __get_videos_comments(self, access_token: str, group_id):
-        """
-            https://vk.com/dev/execute
-            function videos_comments:
-            var owner_id = Args.owner_id;
-            var videos = API.video.get({"owner_id":owner_id, "count":10});
-            var videos_ids = videos.items@.id;
-            var i = 0;
-            var res = [];
-            while (i < videos_ids.length){
-              var comments = API.video.getComments(
-              {
-                "owner_id":owner_id,
-                "video_id":videos_ids[i],
-                "count": 10
-              });
-              res.push({
-                "id": videos_ids[i],
-                "comments": comments.items@.text
-
-              });
-              i = i + 1;
-            }
-
-            return res;
-        """
-        params = {
-            'owner_id': -group_id
-        }
-        response = self.__send(vkApi.get_api_request, method_name='execute.videos_comments', access_token=access_token,
-                               params=params)
-        return response.response
-
-    def __get_photos_comments(self, access_token: str, group_id):
-        """
-            https://vk.com/dev/execute
-            function photos_comments:
-                var owner_id = Args.owner_id;
-                var photos = API.photos.get({
-                    "owner_id":owner_id,
-                    "count":20,
-                    "album_id": "wall"
-                });
-                var photos_ids = photos.items@.id;
-                var i = 0;
-                var res = [];
-                while (i < photos_ids.length){
-                  var comments = API.photos.getComments(
-                  {
-                    "owner_id":owner_id,
-                    "photo_id":photos_ids[i],
-                    "count": 10
-                  });
-                  res.push({
-                    "id": photos_ids[i],
-                    "comments": comments.items@.text
-
-                  });
-                  i = i + 1;
-                }
-
-                return res;
-        """
-        params = {
-            'owner_id': -group_id
-        }
-        response = self.__send(vkApi.get_api_request, method_name='execute.photos_comments', access_token=access_token,
-                               params=params)
-        return response.response
 
     @staticmethod
     def __chunk_data(data, chunk_size):
         for i in range(0, len(data), chunk_size):
             yield data[i:i + chunk_size]
 
-    def get_groups_info(self, access_token: str, group_ids):
+    def get_groups_info(self, group_ids):
         group_ids_chunks = list(self.__chunk_data(group_ids, 100))
         res = []
         for chunk in group_ids_chunks:
             group_ids_str = ','.join(map(str, chunk))
             fields = 'activity,age_limits,description,status'
-            response = self.__send(vkApi.get_groups_by_id, access_token=access_token, group_ids=group_ids_str,
+            response = self.__send(vkApi.get_groups_by_id, access_token=self.__access_token, group_ids=group_ids_str,
                                    fields=fields)
             res.extend(response.response)
         return res
 
-    def get_friends(self, access_token: str, user_id):
-        response = self.__send(vkApi.get_friends, access_token=access_token, user_id=user_id, count=10000)
+    def get_friends(self, user_id):
+        """
+        https://vk.com/dev/friends.get
+        """
+        response = self.__send(vkApi.get_friends, access_token=self.__access_token, user_id=user_id, count=10000)
         return response['items']
 
-    @staticmethod
-    def get_access_token(client_id, client_secret, port=None, timeout=60):
+    # TODO count
+    def get_group_wall(self, group_id: int):
         """
-        https://vk.com/dev/authcode_flow_user
+        https://vk.com/dev/wall.get
         """
+        response = self.__send(vkApi.get_wall, access_token=self.__access_token, owner_id=-group_id, count=10)
+        return response['items']
 
-        def get_random_port():
-            return random.randint(50000, 65000)
 
-        def get_scope():
-            friends_scope = 1 << 1
-            video_scope = 1 << 4
-            wall_scope = 1 << 13
-            offline_scope = 1 << 16
-            groups_scope = 1 << 18
-            return friends_scope + video_scope + wall_scope + offline_scope + groups_scope
+class TimeoutExpiredError(Exception):
+    def __init__(self, timeout):
+        super().__init__(f'the timeout ({timeout}) has expired')
 
-        def get_redirect_url():
-            return f'http://{host}:{port}/vk_auth'
 
-        def start_auth_server(callback):
-            auth_server = AuthRequestRedirectServer(host, port, callback)
-            thread = Thread(target=auth_server.run, daemon=True)
-            thread.start()
-            return auth_server
+def get_access_token(client_id, client_secret, port=None, timeout=60):
+    """
+    https://vk.com/dev/authcode_flow_user
+    """
 
-        def auth_callback(lock: Lock, output, answer: dict):
-            for (key, value) in answer.items():
-                output[key] = value
+    def get_random_port():
+        return random.randint(50000, 65000)
+
+    def get_scope():
+        friends_scope = 1 << 1
+        video_scope = 1 << 4
+        wall_scope = 1 << 13
+        offline_scope = 1 << 16
+        groups_scope = 1 << 18
+        return friends_scope + video_scope + wall_scope + offline_scope + groups_scope
+
+    def get_redirect_url():
+        return f'http://{host}:{port}/vk_auth'
+
+    def start_auth_server(callback):
+        auth_server = AuthRequestRedirectServer(host, port, callback)
+        thread = Thread(target=auth_server.run, daemon=True)
+        thread.start()
+        return auth_server
+
+    def auth_callback(lock: Lock, output, answer: dict):
+        for (key, value) in answer.items():
+            output[key] = value
+        lock.release()
+
+    def open_browser():
+        url = vkApi.build_get_access_code_request_str(client_id, redirect_uri, scope)
+        webbrowser.open(url)
+
+    def get_access_code():
+        lock = Lock()
+        output = dict()
+        auth_server = start_auth_server(lambda answer: auth_callback(lock, output, answer))
+        try:
+            open_browser()
+
+            lock.acquire()
+            lock.acquire(timeout=timeout)
             lock.release()
 
-        def open_browser():
-            url = vkApi.build_get_access_code_request_str(client_id, redirect_uri, scope)
-            webbrowser.open(url)
+            if len(output) == 0:
+                raise TimeoutExpiredError(timeout)
 
-        def get_access_code():
-            lock = Lock()
-            output = dict()
-            auth_server = start_auth_server(lambda answer: auth_callback(lock, output, answer))
-            try:
-                open_browser()
+            if 'code' in output:
+                return output['code']
+            raise Exception(f'{output}')
+        finally:
+            auth_server.stop()
 
-                lock.acquire()
-                lock.acquire(timeout=timeout)
-                lock.release()
+    host = 'localhost'
+    if port is None:
+        port = get_random_port()
+    redirect_uri = get_redirect_url()
+    scope = get_scope()
 
-                if len(output) == 0:
-                    raise TimeoutExpiredError(timeout)
+    code = get_access_code()
+    request_str = vkApi.build_get_access_token_request_str(client_id, client_secret, redirect_uri, code)
+    response = requests.get(request_str).json()
 
-                if 'code' in output:
-                    return output['code']
-                raise Exception(f'{output}')
-            finally:
-                auth_server.stop()
-
-        host = 'localhost'
-        if port is None:
-            port = get_random_port()
-        redirect_uri = get_redirect_url()
-        scope = get_scope()
-
-        code = get_access_code()
-        request_str = vkApi.build_get_access_token_request_str(client_id, client_secret, redirect_uri, code)
-        response = requests.get(request_str).json()
-
-        if 'access_token' in response:
-            return response['access_token']
-        raise Exception(str(response))
+    if 'access_token' in response:
+        return response['access_token']
+    raise Exception(str(response))

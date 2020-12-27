@@ -1,28 +1,19 @@
-import time
+import IOHelper
+from classifierQualityReport import make_quality_report
+from dataset import split_dataset
+from firstClassifier import FirstClassifier
 
-from contentAnalyzers import erotic_content_analyzer, opposition_content_analyzer, get_ml_content_analyzer
-from outputHelper import to_pretty
-from task2 import Task2
-from vkApiWrapper import VkApiWrapper
 
-vkApiWrapper = VkApiWrapper()
+def list_to_tuple(lst):
+    return lst[0], lst[1]
 
-# access_token = '7a754fc77a754fc77a754fc7627a004af177a757a754fc725cae7e2fe78c903c9fd8417'
-access_token = vkApiWrapper.get_access_token('7669046', 'RaKr73JgXqP7NfR11VYM')
 
-start_time = time.time()
+dataset = IOHelper.deserialize('dataset_True.json')
+dataset = list_to_tuple(dataset)
 
-use_extended_group_info = False
-ml_content_analyzer = get_ml_content_analyzer(vkApiWrapper, access_token, use_extended_group_info)
-analyzers = [erotic_content_analyzer, opposition_content_analyzer, ml_content_analyzer]
+train, test = split_dataset(dataset, 0.9)
 
-task2 = Task2(access_token, analyzers, vkApiWrapper)
-user_id = vkApiWrapper.get_user_id(access_token, 'id64551742')
-res = task2.solve([user_id], use_extended_group_info=use_extended_group_info, ignore_private_accounts=False, ignore_empty_friends=False)
+cls = FirstClassifier(train)
 
-res = to_pretty(res)
-print(res)
-
-print(time.time() - start_time)
-
-# task1 с флагом use_extended_group_info=True на Семене Самарине работает порядка 271 секунды
+report = make_quality_report(cls, test)
+print(report)

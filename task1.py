@@ -1,24 +1,22 @@
+from vkApiErrorCodes import PRIVATE_PROFILE_ERROR_CODE
 from vkApiWrapper import VkApiWrapper, VkApiError
 
 
 class Task1:
-    __PRIVATE_PROFILE_ERROR_CODE = 30
-
-    def __init__(self, access_token: str, content_analyzers: list, vkApiWrapper: VkApiWrapper):
-        self.__access_token = access_token
+    def __init__(self, content_analyzers: list, vkApiWrapper: VkApiWrapper):
         self.__content_analyzers = content_analyzers
         self.__vkApiWrapper = vkApiWrapper
 
-    def solve(self, users_id: list, show_untagged: bool = False, ignore_private_accounts: bool = True,
-              use_extended_group_info: bool = False) -> dict:
+    def solve(self, users_id: list, show_untagged_group: bool = False, ignore_private_accounts: bool = True,
+              use_extended_group_info: bool = True) -> dict:
         res = map(
-            lambda user_id: (user_id, self.__try_solve(user_id, show_untagged, use_extended_group_info)),
+            lambda user_id: (user_id, self.__try_solve(user_id, show_untagged_group, use_extended_group_info)),
             users_id
         )
         if ignore_private_accounts:
             res = filter(
                 lambda i: not ('error' in i[1] and isinstance(i[1]['error'], VkApiError)
-                               and i[1]['error'].error_code == self.__PRIVATE_PROFILE_ERROR_CODE),
+                               and i[1]['error'].error_code == PRIVATE_PROFILE_ERROR_CODE),
                 res
             )
         return dict(res)
@@ -30,11 +28,11 @@ class Task1:
             return {'error': e}
 
     def __solve(self, user_id, show_untagged: bool, use_extended_group_info: bool) -> dict:
-        group_ids = self.__vkApiWrapper.try_get_user_group_ids(self.__access_token, user_id)
+        group_ids = self.__vkApiWrapper.try_get_user_group_ids(user_id)
         if use_extended_group_info:
-            groups = self.__vkApiWrapper.get_groups_extended_info(self.__access_token, group_ids)
+            groups = self.__vkApiWrapper.get_groups_extended_info(group_ids)
         else:
-            groups = self.__vkApiWrapper.get_groups_info(self.__access_token, group_ids)
+            groups = self.__vkApiWrapper.get_groups_info(group_ids)
         res = map(
             lambda g: (g['id'], self.__analyze_group(g)),
             groups
@@ -49,7 +47,5 @@ class Task1:
 
     def __analyze_group(self, group: dict) -> dict:
         name = group['name']
-        tags = []
-        for c_a in self.__content_analyzers:
-            tags.extend(c_a(group))
+        tags = [c_a(group) for c_a in self.__content_analyzers]
         return {'name': name, 'tags': tags}
