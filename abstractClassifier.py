@@ -27,7 +27,7 @@ class AbstractClassifier(ABC):
         return f
 
     @abstractmethod
-    def predict(self, group_info: dict) -> str:
+    def predict(self, group_info: dict) -> int:
         pass
 
     @abstractmethod

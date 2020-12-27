@@ -1,3 +1,5 @@
+import random
+
 import IOHelper
 from abstractClassifier import OPPOSITE_TAG, EROTIC_TAG, OTHER_TAG, tag_to_num
 from vkApiWrapper import VkApiWrapper, get_access_token
@@ -81,3 +83,17 @@ def make_and_serialize(use_extend_group_info=True):
     vkApiWrapper = VkApiWrapper(access_token)
     dataset = make(vkApiWrapper, use_extend_group_info)
     IOHelper.serialize(dataset, f'dataset_{use_extend_group_info}.json', True)
+
+
+def split_dataset(dataset: (list[dict], list[int]), p: float = 0.7):
+    train_group, train_tags, test_group, test_tags = [], [], [], []
+    groups, tags = dataset
+    for i in range(len(groups)):
+        x = random.random()
+        if x < p:
+            train_group.append(groups[i])
+            train_tags.append(tags[i])
+        else:
+            test_group.append(groups[i])
+            test_tags.append(tags[i])
+    return (train_group, train_tags), (test_group, test_tags)

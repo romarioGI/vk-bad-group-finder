@@ -26,5 +26,5 @@ def serialize_pretty(data, file_name):
 
 
 def deserialize(file_name):
-    with open(file_name, 'r') as read_file:
+    with open(file_name, 'r', encoding='utf-8') as read_file:
         return json.load(read_file)

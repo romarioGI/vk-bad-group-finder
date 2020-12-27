@@ -3,7 +3,7 @@ import re
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
-from abstractClassifier import AbstractClassifier, num_to_tag
+from abstractClassifier import AbstractClassifier
 
 
 class FirstClassifier(AbstractClassifier):
@@ -33,8 +33,8 @@ class FirstClassifier(AbstractClassifier):
         res = ''.join(res)
         return re.sub(r'[^0-9а-яёa-z]+', '', res.lower())
 
-    def predict(self, group_info: dict) -> str:
+    def predict(self, group_info: dict) -> int:
         group_info = self.__get_useful_info(group_info)
         group_info = self.__cv.transform([group_info])
         pr = self.__clf.predict(group_info)
-        return num_to_tag(pr[0])
+        return int(pr[0])
