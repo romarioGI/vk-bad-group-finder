@@ -1,6 +1,7 @@
 import random
 import webbrowser
 from collections import deque
+from collections.abc import Callable
 from datetime import datetime
 from threading import Thread, Lock
 from time import sleep
@@ -124,21 +125,23 @@ class VkApiRequestSender:
 
 
 class VkApiWrapper:
-    def __init__(self, request_attempts_number: int = 2, request_per_second_limit: int = 3):
+    def __init__(self, access_token: str, request_attempts_number: int = 2, request_per_second_limit: int = 3):
+        self.__access_token = access_token
         self.__sender = VkApiRequestSender(request_attempts_number, request_per_second_limit)
 
-    def __send(self, api_request_func, **params) -> VkApiResponse:
+    def __send(self, api_request_func: Callable[[...], requests.Response], **params) -> VkApiResponse:
         def f():
             response = api_request_func(**params)
             return VkApiResponse(response)
 
         return self.__sender.send(f)
 
-    def get_user_id(self, access_token: str, screen_name: str) -> int:
+    def get_user_id(self, screen_name: str) -> int:
         """
         https://vk.com/dev/utils.resolveScreenName
         """
-        response = self.__send(vkApi.get_utils_resolve_screen_name, access_token=access_token, screen_name=screen_name)
+        response = self.__send(vkApi.get_utils_resolve_screen_name, access_token=self.__access_token,
+                               screen_name=screen_name)
         if response.is_empty:
             raise UserNotFound(screen_name)
         object_type = response['type']
@@ -147,21 +150,22 @@ class VkApiWrapper:
         object_id = response['object_id']
         return object_id
 
-    def get_user_subscription_ids(self, access_token: str, user_id) -> list:
+    def get_user_subscription_ids(self, user_id) -> list:
         """
         https://vk.com/dev/users.getSubscriptions
         """
-        response = self.__send(vkApi.get_user_subscriptions, access_token=access_token, user_id=user_id, extended=0)
+        response = self.__send(vkApi.get_user_subscriptions, access_token=self.__access_token, user_id=user_id,
+                               extended=0)
         res = response['groups']['items']
         return res
 
-    def get_user_group_ids(self, access_token: str, user_id) -> list:
+    def get_user_group_ids(self, user_id) -> list:
         """
         https://vk.com/dev/groups.get
         """
         res = []
         while True:
-            response = self.__send(vkApi.get_user_groups, access_token=access_token, user_id=user_id, extended=0,
+            response = self.__send(vkApi.get_user_groups, access_token=self.__access_token, user_id=user_id, extended=0,
                                    offset=len(res), count=1000)
             cur = response['items']
             res.extend(cur)
@@ -169,114 +173,41 @@ class VkApiWrapper:
                 break
         return res
 
-    def try_get_user_group_ids(self, access_token: str, user_id) -> list:
+    def try_get_user_group_ids(self, user_id) -> list:
         try:
-            groups = self.get_user_group_ids(access_token, user_id)
+            groups = self.get_user_group_ids(user_id)
             return groups
         except VkApiError:
-            subs = self.get_user_subscription_ids(access_token, user_id)
+            subs = self.get_user_subscription_ids(user_id)
             return subs
 
-    def get_groups_extended_info(self, access_token: str, group_ids):
-        groups_info = self.get_groups_info(access_token, group_ids)
-        groups_info = map(lambda g: self.__extend_group_info(access_token, g), groups_info)
+    def get_groups_extended_info(self, group_ids):
+        groups_info = self.get_groups_info(group_ids)
+        groups_info = map(lambda g: self.__extend_group_info(g), groups_info)
         return list(groups_info)
 
-    def __extend_group_info(self, access_token: str, group):
-        group_id = group['id']
-        group['videos'] = self.__get_videos_comments(access_token, group_id)
-        group['photos'] = self.__get_photos_comments(access_token, group_id)
+    # TODO
+    def __extend_group_info(self, group):
         return group
-
-    # оказывается есть лимит на get videos, про который не написано в документации
-    def __get_videos_comments(self, access_token: str, group_id):
-        """
-            https://vk.com/dev/execute
-            function videos_comments:
-            var owner_id = Args.owner_id;
-            var videos = API.video.get({"owner_id":owner_id, "count":10});
-            var videos_ids = videos.items@.id;
-            var i = 0;
-            var res = [];
-            while (i < videos_ids.length){
-              var comments = API.video.getComments(
-              {
-                "owner_id":owner_id,
-                "video_id":videos_ids[i],
-                "count": 10
-              });
-              res.push({
-                "id": videos_ids[i],
-                "comments": comments.items@.text
-
-              });
-              i = i + 1;
-            }
-
-            return res;
-        """
-        params = {
-            'owner_id': -group_id
-        }
-        response = self.__send(vkApi.get_api_request, method_name='execute.videos_comments', access_token=access_token,
-                               params=params)
-        return response.response
-
-    def __get_photos_comments(self, access_token: str, group_id):
-        """
-            https://vk.com/dev/execute
-            function photos_comments:
-                var owner_id = Args.owner_id;
-                var photos = API.photos.get({
-                    "owner_id":owner_id,
-                    "count":20,
-                    "album_id": "wall"
-                });
-                var photos_ids = photos.items@.id;
-                var i = 0;
-                var res = [];
-                while (i < photos_ids.length){
-                  var comments = API.photos.getComments(
-                  {
-                    "owner_id":owner_id,
-                    "photo_id":photos_ids[i],
-                    "count": 10
-                  });
-                  res.push({
-                    "id": photos_ids[i],
-                    "comments": comments.items@.text
-
-                  });
-                  i = i + 1;
-                }
-
-                return res;
-        """
-        params = {
-            'owner_id': -group_id
-        }
-        response = self.__send(vkApi.get_api_request, method_name='execute.photos_comments', access_token=access_token,
-                               params=params)
-        return response.response
 
     @staticmethod
     def __chunk_data(data, chunk_size):
         for i in range(0, len(data), chunk_size):
             yield data[i:i + chunk_size]
 
-    def get_groups_info(self, access_token: str, group_ids):
+    def get_groups_info(self, group_ids):
         group_ids_chunks = list(self.__chunk_data(group_ids, 100))
         res = []
         for chunk in group_ids_chunks:
             group_ids_str = ','.join(map(str, chunk))
             fields = 'activity,age_limits,description,status'
-            response = self.__send(vkApi.get_groups_by_id, access_token=access_token, group_ids=group_ids_str,
+            response = self.__send(vkApi.get_groups_by_id, access_token=self.__access_token, group_ids=group_ids_str,
                                    fields=fields)
             res.extend(response.response)
         return res
 
-    def get_friends(self, access_token: str, user_id):
-        response = self.__send(vkApi.get_friends, access_token=access_token, user_id=user_id, count=10000)
+    def get_friends(self, user_id):
+        response = self.__send(vkApi.get_friends, access_token=self.__access_token, user_id=user_id, count=10000)
         return response['items']
 
     @staticmethod
