@@ -8,40 +8,6 @@ import firstDataset
 from vkApiWrapper import VkApiWrapper
 
 
-def erotic_content_analyzer(group) -> list:
-    if is_contain_words(group, ['порн', 'видео для взрослых', 'эротик', 'пошл', 'porn', 'erotic']):
-        return ['ADULT']
-    return []
-
-
-def opposition_content_analyzer(group) -> list:
-    if is_contain_words(group, ['оппозиция', 'навальн', 'против путина', 'путин вор', 'корруп', 'митинг', 'пикет']):
-        return ['POLITIC']
-    return []
-
-
-def is_contain_words(obj, words: list):
-    words = list(map(lambda w: w.lower(), words))
-    return __is_contain_words(obj, words)
-
-
-def __is_contain_words(obj, words: list):
-    if isinstance(obj, str):
-        s = obj.lower()
-        for w in words:
-            if s.find(w) != -1:
-                return True
-    elif isinstance(obj, list):
-        for o in obj:
-            if __is_contain_words(o, words):
-                return True
-    elif isinstance(obj, dict):
-        for o in obj.values():
-            if __is_contain_words(o, words):
-                return True
-    return False
-
-
 def __get_all_words(obj):
     if isinstance(obj, str):
         yield obj

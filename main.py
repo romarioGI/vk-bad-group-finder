@@ -18,7 +18,7 @@ print(time.time() - start_time)
 analyzers = [erotic_content_analyzer, opposition_content_analyzer, ml_content_analyzer]
 
 task1 = Task1(access_token, analyzers, vkApiWrapper)
-user_id = vkApiWrapper.get_user_id(access_token, '0solvei0')
+user_id = vkApiWrapper.get_user_id(access_token, 'id50440959')
 res = task1.solve([user_id], use_extended_group_info=use_extended_group_info)
 
 res = to_pretty(res)
