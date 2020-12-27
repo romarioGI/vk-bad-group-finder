@@ -81,7 +81,11 @@ class VkApiWrapper:
 
         def __extend_group_info(group):
             group_id = group['id']
-            group['wall'] = self.get_group_wall(group_id)
+            try:
+                group['wall'] = self.get_group_wall(group_id)
+            except VkApiError as e:
+                group['errors'] = [e]
+
             return group
 
         groups_info = self.get_groups_info(group_ids)

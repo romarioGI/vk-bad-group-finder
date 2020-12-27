@@ -1,16 +1,14 @@
-import re
-
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
 from abstractClassifier import AbstractClassifier
 
 
-class FirstClassifier(AbstractClassifier):
+class LogisticRegressionClassifier(AbstractClassifier):
     def get_name(self) -> str:
-        return 'FirstClassifier'
+        return 'LogisticRegressionClassifier'
 
-    def __init__(self, dataset: (dict, int)):
+    def __init__(self, dataset: (list[dict], list[int])):
         groups, tags = dataset
 
         groups_info = [self.__get_useful_info(g) for g in groups]
@@ -23,15 +21,6 @@ class FirstClassifier(AbstractClassifier):
 
         self.__clf = clf
         self.__cv = cv
-
-    # TODO в attachments тоже есть полезная инфа
-    @classmethod
-    def __get_useful_info(cls, group) -> str:
-        res = [group['name'], group['screen_name'], group['activity'], group['description'], group['status']]
-        for p in group['wall']:
-            res.append(p['text'])
-        res = ''.join(res)
-        return re.sub(r'[^0-9а-яёa-z]+', '', res.lower())
 
     def predict(self, group_info: dict) -> int:
         group_info = self.__get_useful_info(group_info)

@@ -1,7 +1,7 @@
 import IOHelper
 from classifierQualityReport import make_quality_report
 from dataset import split_dataset
-from firstClassifier import FirstClassifier
+from logisticRegressionClassifier import LogisticRegressionClassifier
 
 
 def list_to_tuple(lst):
@@ -11,9 +11,9 @@ def list_to_tuple(lst):
 dataset = IOHelper.deserialize('dataset_True.json')
 dataset = list_to_tuple(dataset)
 
-train, test = split_dataset(dataset, 0.9)
+train, test = split_dataset(dataset, 0.8)
 
-cls = FirstClassifier(train)
+cls = LogisticRegressionClassifier(train)
 
 report = make_quality_report(cls, test)
 print(report)

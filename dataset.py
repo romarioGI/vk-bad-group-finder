@@ -74,6 +74,7 @@ def make(vkApiWrapper: VkApiWrapper, use_extend_group_info=True):
         groups_info = vkApiWrapper.get_groups_extended_info(list(screen_name_dataset.keys()))
     else:
         groups_info = vkApiWrapper.get_groups_info(list(screen_name_dataset.keys()))
+    groups_info = list(filter(lambda g: 'errors' not in g, groups_info))
     tags = [screen_name_dataset[g_i['screen_name']] for g_i in groups_info]
     return groups_info, tags
 
@@ -85,7 +86,7 @@ def make_and_serialize(use_extend_group_info=True):
     IOHelper.serialize(dataset, f'dataset_{use_extend_group_info}.json', True)
 
 
-def split_dataset(dataset: (list[dict], list[int]), p: float = 0.7):
+def split_dataset(dataset: tuple[list[dict], list[int]], p: float = 0.7):
     train_group, train_tags, test_group, test_tags = [], [], [], []
     groups, tags = dataset
     for i in range(len(groups)):

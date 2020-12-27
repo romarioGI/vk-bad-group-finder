@@ -3,7 +3,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from abstractClassifier import AbstractClassifier, num_to_tag
 
 
-def make_quality_report(classifier: AbstractClassifier, test_sample: (list[dict], list[int])):
+def make_quality_report(classifier: AbstractClassifier, test_sample: tuple[list[dict], list[int]]):
     def tags_to_str(int_tags: list[int]):
         return [num_to_tag(t) for t in int_tags]
 

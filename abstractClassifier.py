@@ -1,3 +1,4 @@
+import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 
@@ -33,3 +34,14 @@ class AbstractClassifier(ABC):
     @abstractmethod
     def get_name(self) -> str:
         pass
+
+    # TODO в attachments тоже есть полезная инфа
+    @classmethod
+    def __get_useful_info(cls, group) -> str:
+        res = [group['name'], group['screen_name'], group['activity'], group['description'], group['status']]
+        if 'wall' in group:
+            for p in group['wall']:
+                if 'text' in group:
+                    res.append(p['text'])
+        res = ''.join(res)
+        return re.sub(r'[^0-9а-яёa-z]+', '', res.lower())
