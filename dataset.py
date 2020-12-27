@@ -1,5 +1,7 @@
+import IOHelper
 from abstractClassifier import OPPOSITE_TAG, EROTIC_TAG, OTHER_TAG
-from vkApiWrapper import VkApiWrapper
+from vkApiWrapper import VkApiWrapper, get_access_token
+from vkAppConfigInfo import CLIENT_ID, CLIENT_SECRET
 
 opposite_group_screen_names = ['teamnavalny', 'navalny.group', 'navalny_live', 'vesna_democrat',
                                'rusrise', 'european_path', 'oppositionofrussia',
@@ -72,3 +74,10 @@ def make(vkApiWrapper: VkApiWrapper, use_extend_group_info=True):
         groups_info = vkApiWrapper.get_groups_info(list(screen_name_dataset.keys()))
     tags = [screen_name_dataset[g_i['screen_name']] for g_i in groups_info]
     return groups_info, tags
+
+
+def make_and_serialize(use_extend_group_info=True):
+    access_token = get_access_token(CLIENT_ID, CLIENT_SECRET)
+    vkApiWrapper = VkApiWrapper(access_token)
+    dataset = make(vkApiWrapper, use_extend_group_info)
+    IOHelper.serialize(dataset, f'dataset_{use_extend_group_info}.json')
