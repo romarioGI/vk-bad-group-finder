@@ -6,7 +6,10 @@ opposite_group_screen_names = ['teamnavalny', 'navalny.group', 'navalny_live', '
                                'rusrise', 'european_path', 'oppositionofrussia',
                                'limonov_eduard', 'navalnyclub', 'corrupcia_in_russia', 'rf_pravda', 'rospil',
                                'youth_civsoc', 'civsociety', 'lpr_vk', 'club463266', 'against_the_system_ua',
-                               'vopros_naz_bez', 'edrovvedro', 'yabloko_ru', 'ruopp', 'dimon_ekat', 'corrupcia_rf']
+                               'vopros_naz_bez', 'edrovvedro', 'yabloko_ru', 'ruopp', 'dimon_ekat', 'corrupcia_rf',
+                               'kprf_oz', 'corrupcia_rf', 'club1528146', 'clublevayoppoziciy', 'newopposition_official',
+                               'anticrisismeeting', 'realopposition'
+                               ]
 opposite_tag = 'OPPOSITE'
 opposite_dataset = __set_tag(opposite_group_screen_names, opposite_tag)
 
@@ -15,7 +18,8 @@ erotic_group_screen_names = ['tutsexx', 'posliye', 'pornobrazzersvk', 'nu_art_er
                              'sexliborg', 'vids_dolboyoba', 'pornofamiliya', 'pornhub_porn_hub',
                              'club136599045', 'aliporn', 'iwantyou', 'posloe', 'my_name_and_plhk', 'meass', 'xyduwki',
                              'cekc_sex', 'so.vkusom1', 'erotical_fantasy', 'podposyar', '50sogv', 'vulgar76',
-                             'tf.erotica']
+                             'tf.erotica', 'sexy_world_one', 'paradise_for_men_01', 'erotic_pics', 'seksualnye_modeli',
+                             'nsk_models', 'eros_pub', 'erotica_so_vkusom']
 erotic_tag = 'EROTIC'
 erotic_dataset = __set_tag(erotic_group_screen_names, erotic_tag)
 
@@ -48,7 +52,8 @@ non_group_screen_names = ['yarchat', 'baza_chto_gde_kogda', 'voprosi.svoya.igra'
                           'kta_travel_ekb', 'zmshzmsh', 'mogilat_ph', 'pixel_bldjad', 'malyakikalyaki', 'sugrobart',
                           'kazanmath', 'kvant_tournament', 'math_games', 'tichiypiket', 'foto.blog', 'neva33',
                           'wgpubg', 'club144652144', 'club149838562', 'bigdataconf', 'coub', 'club30100935', 'nt_manic',
-                          'krunpub'
+                          'krunpub', 'bad_novosti', 'tennissss', 'pod83', 'pikabu', 'mensrecipes', 'programmistov',
+                          'for.mens', 'smexo', 'adkuhnya', 'nice_food', 'litrpg_book'
                           ]
 non_tag = 'NON'
 non_dataset = __set_tag(non_group_screen_names, non_tag)

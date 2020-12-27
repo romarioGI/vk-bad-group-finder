@@ -3,6 +3,9 @@ from collections.abc import Callable
 
 
 class AbstractClassifier(ABC):
+    def get_analyzer(self) -> Callable[[dict], list[str]]:
+        return lambda g: [self.predict(g)]
+
     @abstractmethod
-    def get_analyzer(self) -> Callable[[str], list[str]]:
+    def predict(self, group_info: dict) -> str:
         pass

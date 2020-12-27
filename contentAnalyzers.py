@@ -2,7 +2,6 @@ import re
 
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
 import firstDataset
 from vkApiWrapper import VkApiWrapper
@@ -58,13 +57,6 @@ class Classifier:
         group_info = self.__cv.transform([group_info])
         pr = self.__clf.predict(group_info)
         return pr[0]
-
-    @staticmethod
-    def prediction_quality_report(answers, predictions) -> str:
-        res = f'accuracy:{accuracy_score(answers, predictions)}\n'
-        res += f'{classification_report(answers, predictions)}\n'
-        res += f'{confusion_matrix(answers, predictions)}'
-        return res
 
 
 def get_ml_content_analyzer(vkApiWrapper: VkApiWrapper, access_token: str, use_extended_group_info: bool):
