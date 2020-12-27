@@ -1,7 +1,7 @@
 import time
 
 from contentAnalyzers import erotic_content_analyzer, opposition_content_analyzer, get_ml_content_analyzer
-from outputHelper import to_pretty
+from IOHelper import to_pretty
 from task1 import Task1
 from vkApiWrapper import VkApiWrapper
 

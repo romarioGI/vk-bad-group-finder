@@ -3,7 +3,7 @@ import re
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
-import firstDataset
+import dataset
 from vkApiWrapper import VkApiWrapper
 
 
@@ -60,11 +60,11 @@ class Classifier:
 
 
 def get_ml_content_analyzer(vkApiWrapper: VkApiWrapper, access_token: str, use_extended_group_info: bool):
-    classifier = Classifier(vkApiWrapper, access_token, firstDataset.dataset, use_extended_group_info)
+    classifier = Classifier(vkApiWrapper, access_token, dataset.dataset, use_extended_group_info)
 
     def f(group) -> list:
         tag = classifier.predict(group)
-        if tag == firstDataset.non_tag:
+        if tag == dataset.non_tag:
             return []
         return [f'ML-{tag}']
 
