@@ -12,9 +12,9 @@ opposite_group_screen_names = ['teamnavalny', 'navalny.group', 'navalny_live', '
                                'anticrisismeeting', 'realopposition'
                                ]
 
-erotic_group_screen_names = ['tutsexx', 'posliye', 'pornobrazzersvk', 'nu_art_erotica',
+erotic_group_screen_names = ['tutsexx', 'nu_art_erotica',
                              'erotique_journal', 'ledesirerotique', 'derzkach', 'eroticheskie_gifki',
-                             'sexliborg', 'vids_dolboyoba', 'pornofamiliya', 'pornhub_porn_hub',
+                             'sexliborg', 'pornofamiliya', 'pornhub_porn_hub',
                              'club136599045', 'aliporn', 'iwantyou', 'posloe', 'my_name_and_plhk', 'meass', 'xyduwki',
                              'cekc_sex', 'so.vkusom1', 'erotical_fantasy', 'podposyar', '50sogv', 'vulgar76',
                              'tf.erotica', 'sexy_world_one', 'paradise_for_men_01', 'erotic_pics', 'seksualnye_modeli',
@@ -44,7 +44,7 @@ other_group_screen_names = ['yarchat', 'baza_chto_gde_kogda', 'voprosi.svoya.igr
                             'howtonihongo', 'jumoreski', 'bmstu_ctf', 'club116038017', 'gianluigi_buffon_the_best',
                             'fairwindpage', 'tachikotv', 'public10933209', 'newartphotography', 'v.kote',
                             'humor_schrodinger', 'stopagent', 'livetasty', 'tripdiary', 'sport_stat', 'transurfing_vk',
-                            'homeideaz', 'mir_vkusa', 'ti_eto_mojesh', 'tumengranat', 'tnshow', 'club84999705',
+                            'homeideaz', 'mir_vkusa', 'ti_eto_mojesh', 'tnshow', 'club84999705',
                             'sisvideo', 'club32464921', 'club127781518', 'catism', 'pozor', 'dubsteplight', 'just_cook',
                             'kta_travel_ekb', 'zmshzmsh', 'mogilat_ph', 'pixel_bldjad', 'malyakikalyaki', 'sugrobart',
                             'kazanmath', 'kvant_tournament', 'math_games', 'tichiypiket', 'foto.blog', 'neva33',
@@ -80,4 +80,4 @@ def make_and_serialize(use_extend_group_info=True):
     access_token = get_access_token(CLIENT_ID, CLIENT_SECRET)
     vkApiWrapper = VkApiWrapper(access_token)
     dataset = make(vkApiWrapper, use_extend_group_info)
-    IOHelper.serialize(dataset, f'dataset_{use_extend_group_info}.json')
+    IOHelper.serialize(dataset, f'dataset_{use_extend_group_info}.json', True)

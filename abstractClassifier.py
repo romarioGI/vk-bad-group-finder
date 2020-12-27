@@ -5,6 +5,16 @@ OPPOSITE_TAG = 'opposite'
 EROTIC_TAG = 'erotic'
 OTHER_TAG = 'other'
 
+ALL_TAGS = [OPPOSITE_TAG, EROTIC_TAG, OTHER_TAG]
+
+
+def tag_to_num(tag: str):
+    return ALL_TAGS.index(tag)
+
+
+def num_to_tag(num: int):
+    return ALL_TAGS[num]
+
 
 class AbstractClassifier(ABC):
 

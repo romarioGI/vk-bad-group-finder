@@ -116,7 +116,7 @@ class VkApiWrapper:
         """
         https://vk.com/dev/wall.get
         """
-        response = self.__send(vkApi.get_wall, owner_id=-group_id, count=10)
+        response = self.__send(vkApi.get_wall, access_token=self.__access_token, owner_id=-group_id, count=10)
         return response['items']
 
 
