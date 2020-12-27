@@ -1,5 +1,5 @@
 import IOHelper
-from abstractClassifier import OPPOSITE_TAG, EROTIC_TAG, OTHER_TAG
+from abstractClassifier import OPPOSITE_TAG, EROTIC_TAG, OTHER_TAG, tag_to_num
 from vkApiWrapper import VkApiWrapper, get_access_token
 from vkAppConfigInfo import CLIENT_ID, CLIENT_SECRET
 
@@ -57,13 +57,13 @@ other_group_screen_names = ['yarchat', 'baza_chto_gde_kogda', 'voprosi.svoya.igr
 
 def get_screen_name_dataset():
     for s_n in opposite_group_screen_names:
-        yield s_n, OPPOSITE_TAG
+        yield s_n, tag_to_num(OPPOSITE_TAG)
 
     for s_n in erotic_group_screen_names:
-        yield s_n, EROTIC_TAG
+        yield s_n, tag_to_num(EROTIC_TAG)
 
     for s_n in other_group_screen_names:
-        yield s_n, OTHER_TAG
+        yield s_n, tag_to_num(OTHER_TAG)
 
 
 def make(vkApiWrapper: VkApiWrapper, use_extend_group_info=True):

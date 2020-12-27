@@ -17,10 +17,19 @@ def num_to_tag(num: int):
 
 
 class AbstractClassifier(ABC):
-
     def get_analyzer(self) -> Callable[[dict], list[str]]:
-        return lambda g: [self.predict(g)]
+        def f(group):
+            tag = self.predict(group)
+            if tag == OTHER_TAG:
+                return []
+            return [f'{self.get_name()}-{tag}']
+
+        return f
 
     @abstractmethod
     def predict(self, group_info: dict) -> str:
+        pass
+
+    @abstractmethod
+    def get_name(self) -> str:
         pass
