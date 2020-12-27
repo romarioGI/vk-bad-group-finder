@@ -4,11 +4,10 @@ from threading import Lock
 from time import sleep
 
 from vkApiError import VkApiError
+from vkApiErrorCodes import TOO_MANY_REQUESTS_ERROR_CODE
 
 
 class VkApiRequestSender:
-    __TOO_MANY_REQUESTS_ERROR_CODE = 6
-
     def __init__(self, attempts_number: int, request_per_second_limit: int):
         if attempts_number < 1:
             raise Exception('attempts_number should be not less then 1')
@@ -58,7 +57,7 @@ class VkApiRequestSender:
                 self.__add_sending()
                 return res
             except VkApiError as e:
-                if e.error_code == self.__TOO_MANY_REQUESTS_ERROR_CODE:
+                if e.error_code == TOO_MANY_REQUESTS_ERROR_CODE:
                     last_e = e
                     fails_count += 1
                     sleep(self.__request_between_time)
