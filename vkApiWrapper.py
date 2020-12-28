@@ -115,12 +115,11 @@ class VkApiWrapper:
         response = self.__send(vkApi.get_friends, access_token=self.__access_token, user_id=user_id, count=10000)
         return response['items']
 
-    # TODO count
     def get_group_wall(self, group_id: int):
         """
         https://vk.com/dev/wall.get
         """
-        response = self.__send(vkApi.get_wall, access_token=self.__access_token, owner_id=-group_id, count=10)
+        response = self.__send(vkApi.get_wall, access_token=self.__access_token, owner_id=-group_id, count=100)
         return response['items']
 
 

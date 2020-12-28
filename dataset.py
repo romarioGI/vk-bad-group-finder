@@ -11,16 +11,17 @@ opposite_group_screen_names = ['teamnavalny', 'navalny.group', 'navalny_live', '
                                'youth_civsoc', 'civsociety', 'lpr_vk', 'club463266', 'against_the_system_ua',
                                'vopros_naz_bez', 'edrovvedro', 'yabloko_ru', 'ruopp', 'dimon_ekat', 'corrupcia_rf',
                                'kprf_oz', 'corrupcia_rf', 'club1528146', 'clublevayoppoziciy', 'newopposition_official',
-                               'anticrisismeeting', 'realopposition'
+                               'anticrisismeeting', 'realopposition', 'protiv_sistems', 'club849414',
+                               'clubprotivputina',
+                               'club25053320', 'russia_svoboda_slova', 'nexta_tv',
                                ]
 
-erotic_group_screen_names = ['tutsexx', 'nu_art_erotica',
-                             'erotique_journal', 'ledesirerotique', 'derzkach', 'eroticheskie_gifki',
-                             'sexliborg', 'pornofamiliya', 'pornhub_porn_hub',
-                             'club136599045', 'aliporn', 'iwantyou', 'posloe', 'my_name_and_plhk', 'meass', 'xyduwki',
-                             'cekc_sex', 'erotical_fantasy', 'podposyar', '50sogv', 'vulgar76',
-                             'tf.erotica', 'sexy_world_one', 'seksualnye_modeli',
-                             'nsk_models', 'eros_pub', 'erotica_so_vkusom']
+erotic_group_screen_names = ['tutsexx', 'nu_art_erotica', 'erotique_journal', 'ledesirerotique', 'derzkach',
+                             'eroticheskie_gifki', 'sexliborg', 'pornofamiliya', 'pornhub_porn_hub', 'club136599045',
+                             'aliporn', 'iwantyou', 'posloe', 'my_name_and_plhk', 'meass', 'xyduwki', 'cekc_sex',
+                             'erotical_fantasy', 'podposyar', '50sogv', 'vulgar76',
+                             'tf.erotica', 'sexy_world_one', 'seksualnye_modeli', 'nsk_models', 'eros_pub',
+                             'erotica_so_vkusom', 'ero.show', 'sexis18', 'public76791337', ]
 
 other_group_screen_names = ['yarchat', 'baza_chto_gde_kogda', 'voprosi.svoya.igra',
                             'math.uniyar.contest', 'yaroslavl_state_university', 'just_str',
@@ -53,7 +54,7 @@ other_group_screen_names = ['yarchat', 'baza_chto_gde_kogda', 'voprosi.svoya.igr
                             'wgpubg', 'club144652144', 'club149838562', 'bigdataconf', 'coub', 'club30100935',
                             'nt_manic',
                             'krunpub', 'bad_novosti', 'tennissss', 'pod83', 'pikabu', 'mensrecipes', 'programmistov',
-                            'for.mens', 'smexo', 'adkuhnya', 'nice_food', 'litrpg_book'
+                            'for.mens', 'smexo', 'adkuhnya', 'nice_food', 'litrpg_book', 'chgkreski'
                             ]
 
 

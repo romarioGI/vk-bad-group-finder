@@ -3,13 +3,7 @@ from classifierQualityReport import make_quality_report
 from dataset import split_dataset
 from logisticRegressionClassifier import LogisticRegressionClassifier
 
-
-def list_to_tuple(lst):
-    return lst[0], lst[1]
-
-
-dataset = IOHelper.json_deserialize('dataset_True.json')
-dataset = list_to_tuple(dataset)
+dataset = IOHelper.pickle_deserialize('dataset')
 
 train, test = split_dataset(dataset, 0.8)
 
