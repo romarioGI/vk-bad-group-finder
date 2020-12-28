@@ -35,13 +35,29 @@ class AbstractClassifier(ABC):
     def get_name(self) -> str:
         pass
 
-    # TODO в attachments тоже есть полезная инфа
-    @staticmethod
-    def get_useful_info(group) -> str:
-        res = [group['name'], group['screen_name'], group['activity'], group['description'], group['status']]
-        if 'wall' in group:
-            for p in group['wall']:
-                if 'text' in group:
-                    res.append(p['text'])
+    @classmethod
+    def get_useful_info(cls, group) -> str:
+        res = cls.__get_useful_info(group)
         res = ''.join(res)
         return re.sub(r'[^0-9а-яёa-z]+', '', res.lower())
+
+    __USEFUL_KEYS = ['description', 'text', 'title']
+
+    @classmethod
+    def __get_useful_info(cls, group: dict):
+        def get_values_for_keys(obj):
+            if isinstance(obj, dict):
+                for k in cls.__USEFUL_KEYS:
+                    if k in obj and isinstance(obj[k], str):
+                        yield obj[k]
+                for v in obj.values():
+                    yield from get_values_for_keys(v)
+            if isinstance(obj, list):
+                for i in obj:
+                    yield from get_values_for_keys(i)
+
+        yield group['name']
+        yield group['screen_name']
+        yield group['activity']
+        yield group['status']
+        yield from get_values_for_keys(group)
