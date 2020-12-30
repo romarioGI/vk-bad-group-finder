@@ -47,5 +47,9 @@ class Task1:
 
     def __analyze_group(self, group: dict) -> dict:
         name = group['name']
-        tags = [c_a(group) for c_a in self.__content_analyzers]
+        tags = []
+        for c_a in self.__content_analyzers:
+            tag = c_a(group)
+            if tag is not None:
+                tags.append(tag)
         return {'name': name, 'tags': tags}

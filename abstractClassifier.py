@@ -18,12 +18,13 @@ def num_to_tag(num: int):
 
 
 class AbstractClassifier(ABC):
-    def get_analyzer(self) -> Callable[[dict], list[str]]:
+    def get_analyzer(self) -> Callable[[dict], str]:
         def f(group):
             tag = self.predict(group)
+            tag = num_to_tag(tag)
             if tag == OTHER_TAG:
-                return []
-            return [f'{self.get_name()}-{tag}']
+                return None
+            return f'{tag}-{self.get_name()}'
 
         return f
 
@@ -56,8 +57,8 @@ class AbstractClassifier(ABC):
                 for i in obj:
                     yield from get_values_for_keys(i)
 
-        yield group['name']
-        yield group['screen_name']
-        yield group['activity']
-        yield group['status']
+        groups_keys = ['name', 'screen_name', 'activity', 'status']
+        for k_ in groups_keys:
+            if k_ in group:
+                yield group[k_]
         yield from get_values_for_keys(group)
