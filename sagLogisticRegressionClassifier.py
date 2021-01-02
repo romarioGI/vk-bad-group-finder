@@ -1,7 +1,7 @@
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.linear_model import LogisticRegression
 
-from abstractClassifier import AbstractClassifier
+from abstractClassifier import AbstractClassifier, tag_to_num, OTHER_TAG
 
 
 class SagLogisticRegressionClassifier(AbstractClassifier):
@@ -24,6 +24,8 @@ class SagLogisticRegressionClassifier(AbstractClassifier):
 
     def predict(self, group_info: dict) -> int:
         group_info = AbstractClassifier.get_useful_info(group_info)
+        if len(group_info) < 150:
+            return tag_to_num(OTHER_TAG)
         group_info = self.__cv.transform([group_info])
         pr = self.__clf.predict(group_info)
         return int(pr[0])

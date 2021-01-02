@@ -28,11 +28,16 @@ class Task1:
             return {'error': e}
 
     def __solve(self, user_id, show_untagged: bool, use_extended_group_info: bool) -> dict:
+        def is_not_deactivated(group):
+            return not ('deactivated' in group and (
+                    group['deactivated'] == 'deleted' or group['deactivated'] == 'banned'))
+
         group_ids = self.__vkApiWrapper.try_get_user_group_ids(user_id)
         if use_extended_group_info:
             groups = self.__vkApiWrapper.get_groups_extended_info(group_ids)
         else:
             groups = self.__vkApiWrapper.get_groups_info(group_ids)
+        groups = filter(is_not_deactivated, groups)
         res = map(
             lambda g: (g['id'], self.__analyze_group(g)),
             groups

@@ -9,6 +9,7 @@ from sagLogisticRegressionClassifier import SagLogisticRegressionClassifier
 from task1 import Task1
 from vkApiWrapper import VkApiWrapper, get_access_token
 from vkAppConfigInfo import CLIENT_ID, CLIENT_SECRET
+import abstractClassifier
 
 
 def fit_and_serialize():
@@ -81,7 +82,8 @@ def main():
 
     print('\rconcat analyzers...', end='')
     # content_analyzers = [decisionTree, kNearestNeighbours, randomForestClassifier, sagLogisticRegressionClassifier,logisticRegressionClassifier]
-    content_analyzers = [kNearestNeighbours, sagLogisticRegressionClassifier, logisticRegressionClassifier]
+    # content_analyzers = [kNearestNeighbours, sagLogisticRegressionClassifier, logisticRegressionClassifier]
+    content_analyzers = [sagLogisticRegressionClassifier]
 
     print('\rcreate task1...', end='')
     task1 = Task1(content_analyzers, vk_api_wrapper)
